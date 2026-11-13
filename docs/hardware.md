@@ -89,6 +89,19 @@ python3 build/tools/imgsign/sec_boot_AX620E_sign.py -i <file>_axgzip.bin -o <out
 The SD boot path in U-Boot only reads the size from the header; it does not
 verify it.
 
+### Signing and replacing the boot chain
+
+The header holds the RSA-2048 modulus (little-endian at `0x30`) and the
+signature (`0x1bc`). All four stock images (`boot.bin`, `uboot.bin`,
+`kernel.img`, `dtb.img`) carry the SDK's default public key,
+`tools/imgsign/public.pem`, whose private key is published in the same
+repository. Whatever the eFuse state, images we build and sign with that key
+are accepted, so the SPL and U-Boot can be rebuilt from the SDK and replaced.
+Secure boot is controlled by bit 26 of `COMM_SYS_BOND_OPT` (`0x02340098`).
+
+Every boot stage lives on the removable microSD card, so a bad boot chain is
+fixed by rewriting the card in a card reader.
+
 ## Kernel
 
 - Linux 4.19.125 from
@@ -146,7 +159,16 @@ association.
    constraints: p1 FAT (stock loaders), p2 small ext4 boot (A/B), p3 squashfs
    rootfs (A/B), p4 application data. An upgrade writes the inactive copies and
    then rewrites the MBR.
-5. **Recovery.** Stock flashing mode only exports p2. The first install, and
+5. **64-bit.** The cores are ARMv8-A; AArch32 is only Sipeed's BSP choice
+   (the SPL itself runs in AArch64). The SDK carries the arm64 BSP for the
+   AX630C sibling (SPL + ATF + U-Boot + 4.19.125 arm64 kernel, prebuilt arm64
+   media modules and libraries), and U-Boot ships `AX620Q_*_arm64_k515`
+   defconfigs, so Axera supports AX620Q in AArch64. Running the Go in
+   AArch64 needs an arm64 SPL/ATF/U-Boot build for this board and an arm64
+   port of the DTS. The AX630C-built media modules are unverified on AX620Q.
+   The gain is the BEAM JIT (x86_64 and aarch64 only); the cost is memory,
+   which matters most on the 256M Go.
+6. **Recovery.** Stock flashing mode only exports p2. The first install, and
    any later "flash the whole card over USB", needs a kernel+initramfs that
    exports all of `/dev/mmcblk1`, booted either from p2 (installer) or from
    p1 (replacement recovery kernel).
