@@ -120,6 +120,26 @@ fixed by rewriting the card in a card reader.
 - Everything else out of tree (aic8800, lt7911_manage, hynitron touch,
   st7789p3) has source in the kernel tree.
 
+### Media stack notes (for open drivers)
+
+- A KVM only needs the MIPI CSI-2 receiver (`ax_mipi_rx`, `ax_mipi_switch`),
+  the YUV bypass capture path inside the ISP driver `ax_proton`, and the
+  VeriSilicon encoders (`ax_venc` for H.264/H.265, `ax_jenc` for JPEG). ISP
+  tuning, NPU, GDC and IVE are not on that path.
+- None of the `ax_*.ko` are stripped. `ax_mipi_rx` has 114 named functions
+  (`ax_dphyrx_glb_init`, `ax_mipi_rx_csi_ctrl_init`, ...), `ax_proton` has
+  3283 (including `__ax_bypass_pipe_wait_yuv_irq_event`), and `ax_venc` /
+  `ax_jenc` wrap VeriSilicon's VCMD kernel driver (`hantroenc_vcmd_*`,
+  `hantrovcmd_isr`).
+- Register blocks: encoder `vsi_vcx` at `0x04010000`, JPEG `ax_jenc` at
+  `0x04000000`, decoder `hx170dec0` at `0x04020000`.
+- Mainline `drivers/media/platform/verisilicon` only encodes JPEG (H1/VPU2);
+  there is no VC8000E or H.264/H.265 encoder upstream.
+- The modules map their registers through `AX_OSAL_DEV_ioremap_nocache`, and
+  OSAL is source, so their register accesses can be logged mmiotrace-style
+  from a rebuilt 4.19 kernel. Turning on FTRACE (and likely KPROBES) is not an
+  option: it changes `struct module`, which breaks the prebuilt modules.
+
 ## Stock userspace
 
 Debian 13 armhf with systemd, glibc 2.41. The KVM app is closed source for
