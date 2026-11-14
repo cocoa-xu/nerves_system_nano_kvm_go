@@ -22,6 +22,6 @@ if [ ! -d $gadget ]; then
 	ls /sys/class/udc | head -n 1 > $gadget/UDC
 fi
 
-modprobe aic8800_fdrv
+modprobe aic8800_bsp && modprobe aic8800_fdrv
 
 exit 0
