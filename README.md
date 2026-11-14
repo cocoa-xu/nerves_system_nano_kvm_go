@@ -29,6 +29,15 @@ on boots the other side as well.
 
 Layout and offsets: `fwup_include/fwup-common.conf`.
 
+## USB gadget
+
+`/usr/sbin/nanokvm-init`, which erlinit runs before starting the VM, sets up
+the configfs gadget `nanokvm` with an NCM network function (`usb0`) and an
+ACM serial function (`ttyGS0`) and binds it. A `VintageNetDirect` config for
+`usb0` then reaches the computer the NanoKVM-Go is plugged into, with mDNS.
+An application that wants other functions (HID, mass storage) unbinds the
+gadget (`UDC`), changes it and binds it again.
+
 ## WiFi firmware
 
 `rootfs_overlay/lib/firmware/aic8800` is the AIC8800 firmware shipped with
