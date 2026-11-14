@@ -1,0 +1,47 @@
+/*
+ * FIT image for the NanoKVM-Go: zImage + DTB. U-Boot verifies the hashes
+ * before booting; a damaged slot then fails over to the other one.
+ */
+/dts-v1/;
+
+/ {
+	description = "NanoKVM-Go Linux";
+	#address-cells = <1>;
+
+	images {
+		kernel {
+			description = "Linux zImage";
+			data = /incbin/("zImage");
+			type = "kernel";
+			arch = "arm";
+			os = "linux";
+			compression = "none";
+			load = <0x42000000>;
+			entry = <0x42000000>;
+			hash {
+				algo = "sha256";
+			};
+		};
+
+		fdt {
+			description = "NanoKVM-Go device tree";
+			data = /incbin/("ax620qe-nanokvm-go.dtb");
+			type = "flat_dt";
+			arch = "arm";
+			compression = "none";
+			hash {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "nanokvm-go";
+
+		nanokvm-go {
+			description = "NanoKVM-Go";
+			kernel = "kernel";
+			fdt = "fdt";
+		};
+	};
+};
