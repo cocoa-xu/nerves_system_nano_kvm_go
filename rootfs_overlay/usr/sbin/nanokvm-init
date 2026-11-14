@@ -4,33 +4,39 @@
 #   computer the NanoKVM-Go is plugged into reaches it without a UART. An
 #   application that wants other functions (HID, mass storage) rebuilds it.
 # - the AIC8800 Wi-Fi driver, which has no device table to autoload from.
+# Nerves' busybox is minimal: no head, mountpoint, seq or tr.
 
 gadget=/sys/kernel/config/usb_gadget/nanokvm
 
 log() { echo "nanokvm-init: $*" > /dev/kmsg; }
 
-mountpoint -q /sys/kernel/config || mount -t configfs configfs /sys/kernel/config
+grep -q " /sys/kernel/config configfs " /proc/mounts ||
+	mount -t configfs configfs /sys/kernel/config
 if [ ! -d $gadget ]; then
 	mkdir -p $gadget/strings/0x409 $gadget/configs/c.1/strings/0x409
 	echo 0x1d6b > $gadget/idVendor
 	echo 0x0104 > $gadget/idProduct
 	echo "Nerves" > $gadget/strings/0x409/manufacturer
 	echo "NanoKVM-Go" > $gadget/strings/0x409/product
-	cat /sys/block/mmcblk0/device/serial > $gadget/strings/0x409/serialnumber 2>/dev/null
+	cat /sys/block/mmcblk0/device/serial > $gadget/strings/0x409/serialnumber 2> /dev/null
 	echo "ncm+acm" > $gadget/configs/c.1/strings/0x409/configuration
-	mkdir -p $gadget/functions/ncm.usb0 $gadget/functions/acm.GS0
-	ln -s $gadget/functions/ncm.usb0 $gadget/configs/c.1/
-	ln -s $gadget/functions/acm.GS0 $gadget/configs/c.1/
+	for f in ncm.usb0 acm.GS0; do
+		mkdir -p $gadget/functions/$f &&
+			ln -s $gadget/functions/$f $gadget/configs/c.1/ ||
+			log "USB function $f not set up"
+	done
+
 	udc=
 	i=0
 	while [ $i -lt 10 ]; do
-		udc=$(ls /sys/class/udc 2> /dev/null | head -n 1)
-		[ -n "$udc" ] && break
+		for udc in /sys/class/udc/*; do break; done
+		[ -e "$udc" ] && break
+		udc=
 		sleep 1
 		i=$((i + 1))
 	done
-	if [ -n "$udc" ] && echo "$udc" > $gadget/UDC; then
-		log "USB gadget bound to $udc"
+	if [ -n "$udc" ] && echo "${udc##*/}" > $gadget/UDC; then
+		log "USB gadget bound to ${udc##*/}"
 	else
 		log "USB gadget not bound: no device controller"
 	fi
