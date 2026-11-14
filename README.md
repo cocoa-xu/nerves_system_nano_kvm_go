@@ -13,6 +13,7 @@ drivers for the HDMI/DisplayPort capture and the JPEG encoder.
 | IEx terminal         | SSH (nerves_ssh)                              |
 | Video capture        | V4L2, LT7911EXC bridge, 4K30 YUYV             |
 | JPEG encoder         | V4L2 M2M (Hantro VC8000E variant)             |
+| H.264 encoder        | V4L2 stateless, 4K30 (VC8000E; see below)     |
 | USB gadget           | configfs, NCM + ACM at boot                   |
 | WiFi                 | AIC8800D80 (SDIO)                             |
 | Watchdog             | Yes, started by U-Boot                        |
@@ -37,6 +38,15 @@ ACM serial function (`ttyGS0`) and binds it. A `VintageNetDirect` config for
 `usb0` then reaches the computer the NanoKVM-Go is plugged into, with mDNS.
 An application that wants other functions (HID, mass storage) unbinds the
 gadget (`UDC`), changes it and binds it again.
+
+## H.264 encoder
+
+The kernel carries the V4L2 H.264 stateless encode series for the VC8000E
+(posted to linux-media in May 2026, not merged upstream yet) with the
+AX620E variant on top, so its uAPI (`V4L2_CID_STATELESS_H264_ENCODE_PARAMS`)
+may still change. The encoder writes `frame_num` and `pic_order_cnt_lsb`
+with 16 bits whatever is configured; the driver declares that in the SPS,
+and applications must wrap their counters at 2^16.
 
 ## WiFi firmware
 
