@@ -10,7 +10,7 @@ the 1 KiB Axera image header and a payload for the GZIPD block.
   MIT license.
 - `uboot.bin`: U-Boot 2020.04 from
   [`cocoa-xu/maix_ax620e_sdk`](https://github.com/cocoa-xu/maix_ax620e_sdk/tree/cocoa/nerves/uboot-ab),
-  branch `cocoa/nerves/uboot-ab` (d9591096), `configs/nanokvm_go_defconfig`, packed with the
+  branch `cocoa/nerves/uboot-ab` (61a4386e), `configs/nanokvm_go_defconfig`, packed with the
   SDK's `ax_gzip` and image signing script. It runs the Nerves A/B boot in
   `uboot/uboot.env`. Like U-Boot, it is under GPL-2.0, and that branch is its
   source.

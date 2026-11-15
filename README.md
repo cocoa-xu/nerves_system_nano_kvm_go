@@ -118,10 +118,43 @@ and applications must wrap their counters at 2^16.
 The `ax620e-npu` driver comes from
 [axera_npu](https://github.com/cocoa-xu/axera_npu) (the `axera-npu`
 package, pinned to a commit) and loads at boot from the NPU's device tree
-node. Its buffers come from a 64 MiB pool of its own (`npu-memory`), which
-movable pages use while the NPU is idle: at 4K the video pipeline holds most
-of the 192 MiB default CMA. Applications run models with the `axera_npu`
-Elixir library.
+node. Its buffers come from a pool of its own (`npu-memory`, 64 MiB unless
+set otherwise, see below), which movable pages use while the NPU is idle: at
+4K the video pipeline holds most of the 192 MiB default CMA. Applications run
+models with the `axera_npu` Elixir library.
+
+## Memory for video and the NPU
+
+Video and the NPU take their buffers from contiguous memory (CMA) pools.
+U-Boot sizes them at every boot from two variables, in MiB:
+
+| U-Boot variable | Pool                                         | Default (Go+) |
+| --------------- | -------------------------------------------- | ------------- |
+| `cma_video`     | video's, Linux's default CMA pool            | 192           |
+| `cma_npu`       | the NPU's (`npu-memory`); 0 turns the NPU off | 64            |
+
+Sizes are multiples of 8 (Linux aligns CMA pools to its 8 MiB page blocks),
+video at least 8, both together at most half of the DRAM. For a variable
+that is unset or out of these bounds U-Boot keeps the device tree's size,
+and its log says why. Movable pages use what a pool does not hold, so an
+idle pool costs little; 4K capture with JPEG and H.264 needs about 192 MiB.
+With the NPU off its driver does not bind and its pool goes back to Linux.
+
+```elixir
+Nerves.Runtime.KV.put(%{"cma_video" => "160", "cma_npu" => "96"})
+```
+
+The sizes apply at the next boot. Trying them first is up to you: set the
+new sizes together with the old ones in `cma_video_was` and `cma_npu_was`
+(empty for the default) and `cma_try` to `1`. The next boot runs the new
+sizes and sets `cma_try` to `2`; validating the firmware
+(`Nerves.Runtime.validate_firmware/0`) keeps them, while any boot before
+that, after a crash, the watchdog or a plain reboot, puts the old ones back.
+`NanoKVMGo.Memory` in [`nano_kvm_go`](https://github.com/cocoa-xu/nano_kvm_go)
+does this for you.
+
+Only a full burn writes U-Boot: upgrades keep the card's, and a U-Boot from
+before these variables ignores them.
 
 ## WiFi firmware
 
