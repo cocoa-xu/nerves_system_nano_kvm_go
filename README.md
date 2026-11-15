@@ -16,6 +16,7 @@ drivers for the HDMI/DisplayPort capture and the JPEG encoder.
 | H.264 encoder        | V4L2 stateless, 4K30 (VC8000E; see below)     |
 | USB gadget           | configfs, NCM at boot, stable MAC addresses   |
 | Auxiliary USB-C      | 2 expansion lines: UART, GPIO, PWM or I2C     |
+| NPU                  | `ax620e-npu` (axera_npu), 64 MiB pool         |
 | WiFi                 | AIC8800D80 (SDIO)                             |
 | Watchdog             | Yes, started by U-Boot                        |
 
@@ -108,6 +109,16 @@ AX620E variant on top, so its uAPI (`V4L2_CID_STATELESS_H264_ENCODE_PARAMS`)
 may still change. The encoder writes `frame_num` and `pic_order_cnt_lsb`
 with 16 bits whatever is configured; the driver declares that in the SPS,
 and applications must wrap their counters at 2^16.
+
+## NPU
+
+The `ax620e-npu` driver comes from
+[axera_npu](https://github.com/cocoa-xu/axera_npu) (the `axera-npu`
+package, pinned to a commit) and loads at boot from the NPU's device tree
+node. Its buffers come from a 64 MiB pool of its own (`npu-memory`), which
+movable pages use while the NPU is idle: at 4K the video pipeline holds most
+of the 192 MiB default CMA. Applications run models with the `axera_npu`
+Elixir library.
 
 ## WiFi firmware
 
