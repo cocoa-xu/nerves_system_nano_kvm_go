@@ -61,8 +61,11 @@ at the next boot:
 Nerves.Runtime.KV.put("usbnet_hostaddr", "02:12:34:56:78:9a")
 ```
 
-The `nano_kvm` library changes them at once with
-`NanoKVM.USB.set_network_addresses/2`.
+`Kuroneko.Gadget.set_network_addresses/2`
+([`kuroneko_gadget`](https://github.com/cocoa-xu/kuroneko_gadget)) changes
+them at once, with this board's options from
+[`nano_kvm_go`](https://github.com/cocoa-xu/nano_kvm_go)
+(`NanoKVMGo.USB.gadget_options/1`).
 
 ## Auxiliary USB-C port
 

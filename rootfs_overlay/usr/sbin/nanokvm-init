@@ -54,7 +54,7 @@ if [ ! -d $gadget ]; then
 	echo "ncm" > $gadget/configs/c.1/strings/0x409/configuration
 	if mkdir -p $ncm; then
 		# The first six bytes of the serial number's SHA-256 and the next
-		# six (NanoKVM.USB.default_network_addresses/1 does the same).
+		# six (NanoKVMGo.USB.default_network_addresses/1 does the same).
 		id=$(boardid)
 		if [ -n "$id" ]; then
 			hash=$(printf %s "$id" | sha256sum)
