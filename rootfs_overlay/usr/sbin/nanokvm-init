@@ -1,8 +1,10 @@
 #!/bin/sh
 # Board setup before the Erlang VM starts (erlinit --pre-run-exec):
-# - a USB gadget with a network (NCM) and a serial (ACM) function, so the
-#   computer the NanoKVM-Go is plugged into reaches it without a UART. An
-#   application that wants other functions (HID, mass storage) rebuilds it.
+# - a USB gadget with a network (NCM) function, so the computer the
+#   NanoKVM-Go is plugged into reaches it without a UART. An application adds
+#   the other functions (HID, mass storage, audio). The controller has seven
+#   endpoints for data to the computer, all of them needed for the KVM
+#   functions: there is no serial (ACM) function.
 # - the AIC8800 Wi-Fi driver, which has no device table to autoload from.
 # Nerves' busybox is minimal: no head, mountpoint, seq or tr.
 
@@ -19,8 +21,8 @@ if [ ! -d $gadget ]; then
 	echo "Nerves" > $gadget/strings/0x409/manufacturer
 	echo "NanoKVM-Go" > $gadget/strings/0x409/product
 	cat /sys/block/mmcblk0/device/serial > $gadget/strings/0x409/serialnumber 2> /dev/null
-	echo "ncm+acm" > $gadget/configs/c.1/strings/0x409/configuration
-	for f in ncm.usb0 acm.GS0; do
+	echo "ncm" > $gadget/configs/c.1/strings/0x409/configuration
+	for f in ncm.usb0; do
 		mkdir -p $gadget/functions/$f &&
 			ln -s $gadget/functions/$f $gadget/configs/c.1/ ||
 			log "USB function $f not set up"
