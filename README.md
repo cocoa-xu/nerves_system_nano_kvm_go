@@ -60,7 +60,7 @@ Nerves.Runtime.KV.put("usbnet_hostaddr", "02:12:34:56:78:9a")
 ```
 
 The `nano_kvm` library changes them at once with
-`NanoKVM.USB.set_network_addresses/3`.
+`NanoKVM.USB.set_network_addresses/2`.
 
 ## H.264 encoder
 
