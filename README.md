@@ -158,11 +158,19 @@ before these variables ignores them.
 
 ## WiFi firmware
 
-`rootfs_overlay/lib/firmware/aic8800` is the AIC8800 firmware shipped with
-the NanoKVM-Go firmware v1.0.10, the same files as in Sipeed's
-[`maix_ax620e_sdk`](https://github.com/sipeed/maix_ax620e_sdk). AIC allows
-redistributing it unchanged: see its terms from linux-firmware in
+`rootfs_overlay/lib/firmware/aic8800` holds the AIC8800D80 files that the
+driver loads, from the NanoKVM-Go firmware v1.0.10 (the same files as in
+Sipeed's [`maix_ax620e_sdk`](https://github.com/sipeed/maix_ax620e_sdk)):
+the Wi-Fi firmware with Bluetooth coexistence for the chip's U02 and H U02
+revisions (built in August 2025), the patches for its ROM and the TX power
+settings. AIC allows redistributing it unchanged: see its terms from
+linux-firmware in
 [LICENSES/LicenseRef-LICENSE.aic.txt](LICENSES/LicenseRef-LICENSE.aic.txt).
+
+linux-firmware's `aic/aic8800d80` cannot replace them yet: it has no
+firmware for the H U02 revision, its patches are older (September 2024), and
+its TX power settings have a column per region, which this driver reads as
+one large number.
 
 ## License
 
