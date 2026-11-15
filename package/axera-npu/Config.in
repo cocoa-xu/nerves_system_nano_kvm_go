@@ -1,0 +1,12 @@
+config BR2_PACKAGE_AXERA_NPU
+	bool "axera-npu"
+	depends on BR2_LINUX_KERNEL
+	help
+	  The NPU driver of Axera AX620E chips (ax620e-npu), with the
+	  vendor's /dev/npu interface, for the axera_npu Elixir library.
+	  The device tree needs the NPU's node and its memory pool.
+
+	  https://github.com/cocoa-xu/axera_npu
+
+comment "axera-npu needs a Linux kernel to be built"
+	depends on !BR2_LINUX_KERNEL
