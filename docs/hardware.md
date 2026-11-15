@@ -13,7 +13,7 @@ Notes from probing a NanoKVM Go+ running stock firmware
 | CPU | 2x Cortex-A53 (`0xd03`) running **AArch32**: `armv7l`, NEON, VFPv4, idiv, LPAE |
 | RAM | Go+ 512 MiB, Go 256 MiB. Linux gets `mem=` (352M observed on Go+); the rest is the CMM pool for the media blocks |
 | Board ID | ADC channel 0: `board_id = ((raw - 0x20) / 0x40) + 1`; 1 = 256M, 3 = 512M (raw 192 on Go+) |
-| Console | `ttyS3` @ 115200, UART at `0x6080000` |
+| Console | `ttyS3` @ 115200, UART at `0x6080000`; its pads go to the auxiliary USB-C port |
 
 The CMM pool is passed to `ax_cmm.ko` as
 `cmmpool=anonymous,0,<0x40000000 + os_mem>,<total - os_mem>M`
@@ -32,6 +32,7 @@ The CMM pool is passed to `ax_cmm.ko` as
 | Touch | Hynitron CST8xx | i2c1 `0x15`, irq GPIO0_2, reset GPIO0_4 | `hynitron_touch` (source in kernel tree) |
 | Accelerometer | SC7A20 in DT | i2c0 `0x19` | probe fails (`-121`) on this unit |
 | USB | DWC3, device mode | role via extcon GPIO2_A13 | configfs gadget `g0` 359f:3305 = 3x HID + NCM |
+| Auxiliary USB-C | USB-PD in, passed on to the target | UART3_TXD/RXD pads; the Finger Robot drives PWM04 on TXD and reads it back on RXD (GPIO1_A3) | `NanoKVM-Server`, through `devmem` |
 | Recovery button | | GPIO register `0x600108c` bit 2, active low | read by U-Boot |
 | Watchdog | wdt0, wdt2 | | `ax_wdt`, `HANDLE_BOOT_ENABLED` + `NOWAYOUT` |
 | RTC | none usable | | |

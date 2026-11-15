@@ -15,6 +15,7 @@ drivers for the HDMI/DisplayPort capture and the JPEG encoder.
 | JPEG encoder         | V4L2 M2M (Hantro VC8000E variant)             |
 | H.264 encoder        | V4L2 stateless, 4K30 (VC8000E; see below)     |
 | USB gadget           | configfs, NCM at boot, stable MAC addresses   |
+| Auxiliary USB-C      | 2 expansion lines: UART, GPIO, PWM or I2C     |
 | WiFi                 | AIC8800D80 (SDIO)                             |
 | Watchdog             | Yes, started by U-Boot                        |
 
@@ -61,6 +62,43 @@ Nerves.Runtime.KV.put("usbnet_hostaddr", "02:12:34:56:78:9a")
 
 The `nano_kvm` library changes them at once with
 `NanoKVM.USB.set_network_addresses/2`.
+
+## Auxiliary USB-C port
+
+Besides USB-PD power, the port with the lightning icon carries two SoC
+pads, UART3's TXD and RXD, which Sipeed's Finger Robot uses. The system
+makes them expansion lines for the application. There is no USB on this
+port: the SoC's only USB controller is the main port's.
+
+Nothing uses UART3 as a console. U-Boot does not wait for a key there
+(`bootdelay=-2`), Linux's console is `ttynull` (early messages go to the RAM
+log) and so is the Erlang VM's terminal: use SSH. The boot ROM and the stock
+SPL may still print a few lines on TXD at power-on.
+
+The `nanokvm-go-expansion` driver keeps both lines as inputs pulled down
+until the application writes a mode to `/sys/devices/platform/expansion/mode`
+(`modes` lists them):
+
+| Mode       | Line 0 (TXD pad)              | Line 1 (RXD pad)              |
+| ---------- | ----------------------------- | ----------------------------- |
+| `off`      | input, pulled down (at boot)  | input, pulled down            |
+| `uart`     | `ttyS3` TXD                   | `ttyS3` RXD                   |
+| `gpio`     | GPIO `EXPANSION0`             | GPIO `EXPANSION1`             |
+| `pwm`      | `6061000.pwm` channel 0       | `6061000.pwm` channel 1       |
+| `pwm-gpio` | `6061000.pwm` channel 0       | GPIO `EXPANSION1`             |
+| `gpio-pwm` | GPIO `EXPANSION0`             | `6061000.pwm` channel 1       |
+| `i2c`      | `/dev/i2c-2` SDA, pulled up   | `/dev/i2c-2` SCL, pulled up   |
+
+What a mode does not give to userspace stays requested by the driver, so
+nothing drives a line by mistake; a mode is left only once the application
+has let go of its GPIOs and PWM channels (`EBUSY` until then). The I2C bus
+is bit-banged at about 50 kHz and counts on the module's pull-ups, the
+pads' own are weak.
+
+Not known yet: which USB-C contacts carry the lines (SBU1/SBU2 or D+/D-; on
+SBU, flipping the plug swaps line 0 and line 1) and the pads' voltage, most
+likely 3.3 V. Measure before connecting anything other than the Finger
+Robot.
 
 ## H.264 encoder
 
