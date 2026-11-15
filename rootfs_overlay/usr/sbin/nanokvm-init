@@ -5,14 +5,42 @@
 #   the other functions (HID, mass storage, audio). The controller has seven
 #   endpoints for data to the computer, all of them needed for the KVM
 #   functions: there is no serial (ACM) function.
+#   The network's addresses stay the same from boot to boot, so that the
+#   computer keeps one network interface for the NanoKVM-Go: those in the
+#   U-Boot environment (usbnet_devaddr for the NanoKVM-Go's end,
+#   usbnet_hostaddr for the computer's: U-Boot's names), else addresses
+#   made from the serial number.
 # - the AIC8800 Wi-Fi driver, which has no device table to autoload from.
 # - the LCD's panel driver: it reads its init sequence from /lib/firmware,
 #   which a built-in driver would ask for before the root file system.
 # Nerves' busybox is minimal: no head, mountpoint, seq or tr.
 
 gadget=/sys/kernel/config/usb_gadget/nanokvm
+ncm=$gadget/functions/ncm.usb0
+hex='[0-9a-fA-F][0-9a-fA-F]'
 
 log() { echo "nanokvm-init: $*" > /dev/kmsg; }
+
+# A locally administered unicast address from 12 hex digits.
+local_address() {
+	printf "%02x%s" $(((0x$(echo $1 | cut -c1-2) & 0xfc) | 0x02)) "$(echo $1 | cut -c3-12)" |
+		sed 's/../&:/g; s/:$//'
+}
+
+# Sets an address of the network function ($1) to the U-Boot environment's
+# variable ($2) when that holds a unicast address, else to $3. The kernel
+# refuses multicast addresses but not every malformed one.
+set_address() {
+	value=$(fw_printenv -n $2 2> /dev/null)
+	case $value in
+	"") ;;
+	$hex:$hex:$hex:$hex:$hex:$hex)
+		echo $value > $ncm/$1 2> /dev/null && return
+		log "$2 $value is not a unicast address" ;;
+	*) log "$2 $value is not an address" ;;
+	esac
+	[ -n "$3" ] && echo $3 > $ncm/$1
+}
 
 grep -q " /sys/kernel/config configfs " /proc/mounts ||
 	mount -t configfs configfs /sys/kernel/config
@@ -24,11 +52,21 @@ if [ ! -d $gadget ]; then
 	echo "NanoKVM-Go" > $gadget/strings/0x409/product
 	cat /sys/block/mmcblk0/device/serial > $gadget/strings/0x409/serialnumber 2> /dev/null
 	echo "ncm" > $gadget/configs/c.1/strings/0x409/configuration
-	for f in ncm.usb0; do
-		mkdir -p $gadget/functions/$f &&
-			ln -s $gadget/functions/$f $gadget/configs/c.1/ ||
-			log "USB function $f not set up"
-	done
+	if mkdir -p $ncm; then
+		# The first six bytes of the serial number's SHA-256 and the next
+		# six (NanoKVM.USB.default_network_addresses/1 does the same).
+		id=$(boardid)
+		if [ -n "$id" ]; then
+			hash=$(printf %s "$id" | sha256sum)
+			dev=$(local_address $(echo $hash | cut -c1-12))
+			host=$(local_address $(echo $hash | cut -c13-24))
+		fi
+		set_address dev_addr usbnet_devaddr $dev
+		set_address host_addr usbnet_hostaddr $host
+		ln -s $ncm $gadget/configs/c.1/ || log "USB function ncm.usb0 not linked"
+	else
+		log "USB function ncm.usb0 not set up"
+	fi
 
 	udc=
 	i=0

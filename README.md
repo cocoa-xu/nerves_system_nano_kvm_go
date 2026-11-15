@@ -14,7 +14,7 @@ drivers for the HDMI/DisplayPort capture and the JPEG encoder.
 | Video capture        | V4L2, LT7911EXC bridge, 4K30 YUYV             |
 | JPEG encoder         | V4L2 M2M (Hantro VC8000E variant)             |
 | H.264 encoder        | V4L2 stateless, 4K30 (VC8000E; see below)     |
-| USB gadget           | configfs, NCM + ACM at boot                   |
+| USB gadget           | configfs, NCM at boot, stable MAC addresses   |
 | WiFi                 | AIC8800D80 (SDIO)                             |
 | Watchdog             | Yes, started by U-Boot                        |
 
@@ -33,11 +33,34 @@ Layout and offsets: `fwup_include/fwup-common.conf`.
 ## USB gadget
 
 `/usr/sbin/nanokvm-init`, which erlinit runs before starting the VM, sets up
-the configfs gadget `nanokvm` with an NCM network function (`usb0`) and an
-ACM serial function (`ttyGS0`) and binds it. A `VintageNetDirect` config for
-`usb0` then reaches the computer the NanoKVM-Go is plugged into, with mDNS.
-An application that wants other functions (HID, mass storage) unbinds the
-gadget (`UDC`), changes it and binds it again.
+the configfs gadget `nanokvm` with an NCM network function (`usb0`) and
+binds it. A `VintageNetDirect` config for `usb0` then reaches the computer
+the NanoKVM-Go is plugged into, with mDNS. There is no serial (ACM)
+function: the KVM functions need all seven of the controller's endpoints
+for data to the computer. An application that wants other functions (HID,
+mass storage, audio) unbinds the gadget (`UDC`), changes it and binds it
+again.
+
+The network function keeps its MAC addresses from boot to boot, so that
+the computer keeps one network interface for the NanoKVM-Go instead of
+finding a new one each time:
+
+| U-Boot variable   | Address of                              | Default                     |
+| ----------------- | --------------------------------------- | --------------------------- |
+| `usbnet_devaddr`  | the NanoKVM-Go's end (`usb0`)           | bytes 0-5 of SHA-256(ID)    |
+| `usbnet_hostaddr` | the computer's end, its network adapter | bytes 6-11 of SHA-256(ID)   |
+
+The ID is the serial number `boardid` prints (the hostname's suffix), and
+the defaults are locally administered unicast addresses. Set a variable to
+choose an address, and leave it empty for the default; the change applies
+at the next boot:
+
+```elixir
+Nerves.Runtime.KV.put("usbnet_hostaddr", "02:12:34:56:78:9a")
+```
+
+The `nano_kvm` library changes them at once with
+`NanoKVM.USB.set_network_addresses/3`.
 
 ## H.264 encoder
 
