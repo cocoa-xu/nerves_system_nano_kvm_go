@@ -2,6 +2,7 @@ defmodule NervesSystemNanoKvmGo.MixProject do
   use Mix.Project
 
   @app :nerves_system_nano_kvm_go
+  @source_url "https://github.com/cocoa-xu/#{@app}"
   @version Path.join(__DIR__, "VERSION")
            |> File.read!()
            |> String.trim()
@@ -65,7 +66,8 @@ defmodule NervesSystemNanoKvmGo.MixProject do
   defp package do
     [
       files: package_files(),
-      licenses: ["GPL-2.0-only", "GPL-2.0-or-later"]
+      licenses: ["Apache-2.0", "GPL-2.0-only", "GPL-2.0-or-later"],
+      links: %{"GitHub" => @source_url}
     ]
   end
 
@@ -88,7 +90,8 @@ defmodule NervesSystemNanoKvmGo.MixProject do
   end
 
   defp package_files do
-    ["CHANGELOG.md", "README.md", "VERSION"] ++ source_finger_print_files()
+    ["CHANGELOG.md", "LICENSES/*", "README.md", "REUSE.toml", "VERSION"] ++
+      source_finger_print_files()
   end
 
   defp build_runner_opts do

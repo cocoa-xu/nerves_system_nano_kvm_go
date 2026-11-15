@@ -126,4 +126,15 @@ Elixir library.
 ## WiFi firmware
 
 `rootfs_overlay/lib/firmware/aic8800` is the AIC8800 firmware shipped with
-the NanoKVM-Go firmware v1.0.10.
+the NanoKVM-Go firmware v1.0.10, the same files as in Sipeed's
+[`maix_ax620e_sdk`](https://github.com/sipeed/maix_ax620e_sdk). AIC allows
+redistributing it unchanged: see its terms from linux-firmware in
+[LICENSES/LicenseRef-LICENSE.aic.txt](LICENSES/LicenseRef-LICENSE.aic.txt).
+
+## License
+
+Files written for this system are under Apache-2.0. Files from or for
+Buildroot, Linux and U-Boot keep their licenses, GPL-2.0-or-later or
+GPL-2.0-only, and the boot loaders and the Wi-Fi firmware their vendors'.
+[REUSE.toml](REUSE.toml) gives the license of each file and
+[LICENSES](LICENSES) their texts.

@@ -1,0 +1,123 @@
+version = 1
+
+[[annotations]]
+path = [
+ ".gitignore",
+ "CHANGELOG.md",
+ "README.md",
+ "REUSE.toml",
+ "VERSION",
+ "boot/README.md",
+ "busybox.fragment",
+ "docs/hardware.md",
+ "kernel.its",
+ "lcd/mipi_dbi_cmd.py",
+ "mix.exs",
+ "nerves_defconfig",
+ "rootfs_overlay/usr/sbin/nanokvm-init"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Cocoa"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Buildroot derived or related files
+# NOTE: packages here proactively have copyright assigned to the Buildroot
+# developers to avoid worrying about copyright assignment when upstreaming.
+[[annotations]]
+path = [
+ "Config.in",
+ "package/**",
+ "external.mk",
+ "post-build.sh",
+ "post-createfs.sh"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "The Buildroot developers <buildroot@buildroot.org>"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+# Linux kernel derived or related files
+[[annotations]]
+path = [
+ "linux/*"
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Various"
+SPDX-License-Identifier = "GPL-2.0-only"
+
+# The LCD's init sequence, from the vendor kernel's fb_st7789p3 (fbtft)
+[[annotations]]
+path = [
+ "lcd/nanokvm-go-lcd.txt",
+ "rootfs_overlay/lib/firmware/sipeed,nanokvm-go-lcd.bin"
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Various"
+SPDX-License-Identifier = "GPL-2.0-only"
+
+# U-Boot derived or related files: the A/B boot follows the uboot.env of
+# nerves_system_bbb, and our U-Boot has the same environment built in
+[[annotations]]
+path = [
+ "uboot/*"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+ "2018 Frank Hunleth",
+ "2026 Cocoa"
+]
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+# U-Boot of Sipeed's maix_ax620e_sdk with our changes, see boot/README.md
+[[annotations]]
+path = [
+ "boot/uboot.bin"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Various"
+SPDX-License-Identifier = "GPL-2.0-only"
+
+# The stock SPL, whose source Sipeed publishes in maix_ax620e_sdk under the
+# MIT license, see boot/README.md
+[[annotations]]
+path = [
+ "boot/boot.bin"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+ "2019-2024 Axera Semiconductor Co., Ltd.",
+ "2025 Sipeed"
+]
+SPDX-License-Identifier = "MIT"
+
+# Fwup config files
+[[annotations]]
+path = [
+ "fwup-ops.conf",
+ "fwup.conf",
+ "fwup_include/*"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Cocoa"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Various config files
+[[annotations]]
+path = [
+ "rootfs_overlay/etc/boardid.config",
+ "rootfs_overlay/etc/erlinit.config",
+ "rootfs_overlay/etc/fw_env.config",
+ "rootfs_overlay/etc/modprobe.d/aic8800.conf"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Cocoa"
+SPDX-License-Identifier = "Apache-2.0"
+
+# AIC8800 Wi-Fi firmware, unchanged from Sipeed's maix_ax620e_sdk, under the
+# terms AIC gives it in linux-firmware
+[[annotations]]
+path = [
+ "rootfs_overlay/lib/firmware/aic8800/*"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2020 AIC semiconductor"
+SPDX-License-Identifier = "LicenseRef-LICENSE.aic"
