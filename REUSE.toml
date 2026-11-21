@@ -67,7 +67,8 @@ SPDX-FileCopyrightText = [
 ]
 SPDX-License-Identifier = "GPL-2.0-or-later"
 
-# U-Boot of Sipeed's maix_ax620e_sdk with our changes, see boot/README.md
+# U-Boot of Sipeed's maix_ax620e_sdk with our changes (cocoa-xu/u-boot-ax620e),
+# see boot/README.md
 [[annotations]]
 path = [
  "boot/uboot.bin"
