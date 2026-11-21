@@ -34,11 +34,12 @@ together. For an application of your own, with `MIX_TARGET=nano_kvm_go`:
  github: "cocoa-xu/nerves_system_nano_kvm_go",
  tag: "v0.1.0",
  runtime: false,
- targets: :nano_kvm_go,
- # Until a release carries the prebuilt system: build it with Buildroot,
- # which takes Linux and a while.
- nerves: [compile: true]}
+ targets: :nano_kvm_go}
 ```
+
+The release carries the system prebuilt, and `mix deps.get` downloads it.
+With `nerves: [compile: true]` on the dependency, a commit without a
+prebuilt system is built with Buildroot, which takes Linux and a while.
 
 The board's hardware is in [`nano_kvm_go`](https://github.com/cocoa-xu/nano_kvm_go),
 what the computer sees over USB in
