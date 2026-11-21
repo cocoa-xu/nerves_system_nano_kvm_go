@@ -15,6 +15,7 @@ path = [
  "mix.exs",
  "mix.lock",
  "nerves_defconfig",
+ "rootfs_overlay/usr/sbin/expand-app-partition",
  "rootfs_overlay/usr/sbin/nanokvm-init"
 ]
 precedence = "aggregate"

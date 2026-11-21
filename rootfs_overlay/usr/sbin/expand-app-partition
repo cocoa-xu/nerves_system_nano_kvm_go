@@ -1,0 +1,64 @@
+#!/bin/sh
+# Grows the application data partition to the end of the card. fwup does that
+# when it writes the card itself; a card written from an image (dd,
+# balenaEtcher) keeps the image's 512 MiB. Runs from nanokvm-init, before the
+# Erlang VM and after erlinit mounted /root if it holds a file system:
+# - none yet (the first boot): the partition grows, and nerves_runtime then
+#   formats all of it
+# - f2fs: the partition grows, then a new f2fs is made over all of it, with
+#   the files copied through memory when they take at most half of what is
+#   free. resize.f2fs 1.16 cannot be used: it fails, half done, on a file
+#   system that ever held files.
+# DISK, ROOT and OPS point it at another disk, mount point and ops.fw (tests).
+
+disk=${DISK:-/dev/mmcblk0}
+part=${disk}p4
+root=${ROOT:-/root}
+ops=${OPS:-/usr/share/fwup/ops.fw}
+sys=/sys/class/block/${part##*/}
+
+log() { echo "expand-app-partition: $*" > /dev/kmsg; }
+
+[ -e $sys ] || exit 0
+
+# Below 64 MiB (in sectors) a new partition table is not worth it
+if [ $(($(cat /sys/class/block/${disk##*/}/size) - $(cat $sys/start) - $(cat $sys/size))) -ge 131072 ]; then
+	if fwup -a -q -U -i $ops -t expand -d $disk > /dev/null && partx -u -n 4 $disk; then
+		log "partition grown to $(($(cat $sys/size) / 2048)) MiB"
+	else
+		log "partition not grown"
+		exit 1
+	fi
+fi
+
+# An f2fs file system mounted at $root and a tenth or more smaller than its
+# partition, with what it holds taking at most half the free memory
+grep -q "^$part $root f2fs " /proc/mounts || exit 0
+set -- $(df -P -k $root | tail -n 1)
+size=$2 used=$3
+[ $((size * 2)) -lt $(($(cat $sys/size) * 9 / 10)) ] || exit 0
+memory=$(($(sed -n 's/^MemAvailable: *\([0-9]*\) kB$/\1/p' /proc/meminfo) / 2))
+if [ $used -gt $memory ]; then
+	log "$used KiB in $root, more than half the free memory: file system not grown"
+	exit 1
+fi
+
+# Its own tmpfs: /tmp is smaller
+copy=/tmp/expand-app-partition
+mkdir -p $copy
+if ! mount -t tmpfs -o size=${memory}k tmpfs $copy || ! cp -a $root/. $copy/ || ! umount $root; then
+	log "files not copied or $root in use: file system not grown"
+	umount $copy
+	rmdir $copy
+	exit 1
+fi
+# From mkfs until the second mount the files are only in memory. A file
+# system left unmounted would be formatted by nerves_runtime.
+if mkfs.f2fs -f -t 0 $part > /dev/null && mount -t f2fs -o nodev $part $root &&
+	cp -a $copy/. $root/ && umount $root && mount -t f2fs -o nodev $part $root; then
+	log "file system grown"
+else
+	log "file system not grown: $root may have lost its files"
+fi
+umount $copy
+rmdir $copy
