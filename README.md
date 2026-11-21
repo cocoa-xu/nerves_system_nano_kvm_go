@@ -12,7 +12,7 @@ NanoKVM-Go with 256 MiB (AX620QF) is not supported yet.
 | Memory               | 512 MiB                                       |
 | Storage              | MicroSD                                       |
 | Boot loader          | U-Boot 2020.04, [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e), A/B slots |
-| Linux kernel         | 7.3, `cocoa-xu/linux` `cocoa/nerves/ax620e-h264` |
+| Linux kernel         | 7.3, [`cocoa-xu/linux-ax620e`](https://github.com/cocoa-xu/linux-ax620e) `ax620e-7.3` |
 | IEx terminal         | SSH (nerves_ssh)                              |
 | Video capture        | V4L2, LT7911EXC bridge, 4K30 YUYV             |
 | JPEG encoder         | V4L2 M2M (Hantro VC8000E variant)             |
