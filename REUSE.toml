@@ -13,6 +13,7 @@ path = [
  "kernel.its",
  "lcd/mipi_dbi_cmd.py",
  "mix.exs",
+ "mix.lock",
  "nerves_defconfig",
  "rootfs_overlay/usr/sbin/nanokvm-init"
 ]
