@@ -1,15 +1,17 @@
 # Sipeed NanoKVM-Go
 
-Nerves system for the Sipeed NanoKVM-Go (Axera AX620QE, two Cortex-A53 cores
+Nerves system for the Sipeed NanoKVM-Go+ (Axera AX620QE, two Cortex-A53 cores
 running 32-bit ARM, 512 MiB LPDDR4) on a mainline Linux kernel with open
-drivers for the HDMI/DisplayPort capture and the JPEG encoder.
+drivers for its hardware: the HDMI/DisplayPort capture with its sound, the
+JPEG and H.264 encoders, the NPU, the LCD and its touch panel. The
+NanoKVM-Go with 256 MiB (AX620QF) is not supported yet.
 
 | Feature              | Description                                   |
 | -------------------- | --------------------------------------------- |
 | CPU                  | 2x Cortex-A53 (AArch32)                       |
 | Memory               | 512 MiB                                       |
 | Storage              | MicroSD                                       |
-| Linux kernel         | 7.3, `cocoa-xu/linux` `cocoa/nerves/ax620e`   |
+| Linux kernel         | 7.3, `cocoa-xu/linux` `cocoa/nerves/ax620e-h264` |
 | IEx terminal         | SSH (nerves_ssh)                              |
 | Video capture        | V4L2, LT7911EXC bridge, 4K30 YUYV             |
 | JPEG encoder         | V4L2 M2M (Hantro VC8000E variant)             |
@@ -19,6 +21,28 @@ drivers for the HDMI/DisplayPort capture and the JPEG encoder.
 | NPU                  | `ax620e-npu` (axera_npu), 64 MiB pool         |
 | WiFi                 | AIC8800D80 (SDIO)                             |
 | Watchdog             | Yes, started by U-Boot                        |
+
+## Using it
+
+[Kuroneko](https://github.com/cocoa-xu/kuroneko), the KVM over IP made on
+this system, has firmware ready to burn and shows how the parts fit
+together. For an application of your own, with `MIX_TARGET=nano_kvm_go`:
+
+```elixir
+{:nerves_system_nano_kvm_go,
+ github: "cocoa-xu/nerves_system_nano_kvm_go",
+ tag: "v0.1.0",
+ runtime: false,
+ targets: :nano_kvm_go,
+ # Until a release carries the prebuilt system: build it with Buildroot,
+ # which takes Linux and a while.
+ nerves: [compile: true]}
+```
+
+The board's hardware is in [`nano_kvm_go`](https://github.com/cocoa-xu/nano_kvm_go),
+what the computer sees over USB in
+[`kuroneko_gadget`](https://github.com/cocoa-xu/kuroneko_gadget) and the NPU
+in [`axera_npu`](https://github.com/cocoa-xu/axera_npu).
 
 ## Boot and firmware updates
 
