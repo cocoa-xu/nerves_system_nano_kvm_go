@@ -31,7 +31,9 @@ defmodule NervesSystemNanoKvmGo.MixProject do
   defp nerves_package do
     [
       type: :system,
-      artifact_sites: [],
+      artifact_sites: [
+        {:github_releases, "cocoa-xu/#{@app}"}
+      ],
       build_runner_opts: build_runner_opts(),
       platform: Nerves.System.BR,
       platform_config: [
