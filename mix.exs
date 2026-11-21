@@ -16,12 +16,20 @@ defmodule NervesSystemNanoKvmGo.MixProject do
       nerves_package: nerves_package(),
       description: description(),
       package: package(),
-      deps: deps()
+      deps: deps(),
+      aliases: [loadconfig: [&bootstrap/1]]
     ]
   end
 
   def application do
     []
+  end
+
+  # Nerves 1 builds a system in its own directory only with nerves_bootstrap
+  # started, which an application does in its config.exs
+  defp bootstrap(args) do
+    Application.start(:nerves_bootstrap)
+    Mix.Task.run("loadconfig", args)
   end
 
   def cli do
