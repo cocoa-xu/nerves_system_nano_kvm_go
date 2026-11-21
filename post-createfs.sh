@@ -11,8 +11,8 @@ FWUP_CONFIG=$NERVES_DEFCONFIG_DIR/fwup.conf
 BOOT_VFAT=$BINARIES_DIR/boot.vfat
 rm -f $BOOT_VFAT
 dd if=/dev/zero of=$BOOT_VFAT bs=512 count=0 seek=262144 2> /dev/null
-mkfs.vfat -F 32 -s 1 -h 8192 -n BOOT $BOOT_VFAT > /dev/null
-mcopy -i $BOOT_VFAT $BINARIES_DIR/boot.bin $BINARIES_DIR/uboot.bin ::/
+$HOST_DIR/sbin/mkfs.fat -F 32 -s 1 -h 8192 -n BOOT $BOOT_VFAT > /dev/null
+$HOST_DIR/bin/mcopy -i $BOOT_VFAT $BINARIES_DIR/boot.bin $BINARIES_DIR/uboot.bin ::/
 
 # The kernel slots hold a FIT image of the zImage and the device tree
 cp $NERVES_DEFCONFIG_DIR/kernel.its $BINARIES_DIR
