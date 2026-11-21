@@ -53,6 +53,7 @@ jobs:
         run: mix compile
       - name: Package
         run: |
+          mkdir -p artifacts
           mix nerves.artifact nerves_system_nano_kvm_go --path artifacts
           ls -l artifacts
           df -h /
