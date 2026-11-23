@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+* Linux at linux-ax620e 9b93424:
+  * The USB gadget's optical drive takes CDs whose image keeps the sectors
+    as the disc has them, as a CUE sheet's BIN does: audio tracks and data
+    tracks of mode 1 and 2, from the LUN's `tracks`. It answers READ TOC
+    for each track, READ CD for audio and whole sectors with their
+    subchannel, and READ SUB-CHANNEL
+  * It tells the target of a new or a removed disc by GET EVENT STATUS
+    NOTIFICATION, and asks it to eject a disc, as a drive's button does
+    (the LUN's `eject_request`)
+
 ## v0.1.2 (2026-11-23)
 
 * Unix datagram sockets queue 512 messages, as on desktop distributions,
