@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Linux at linux-ax620e 9b93424:
+* Linux at linux-ax620e 7af4e54:
   * The USB gadget's optical drive takes CDs whose image keeps the sectors
     as the disc has them, as a CUE sheet's BIN does: audio tracks and data
     tracks of mode 1 and 2, from the LUN's `tracks`. It answers READ TOC
