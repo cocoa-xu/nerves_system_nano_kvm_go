@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.2 (2026-11-23)
 
 * Unix datagram sockets queue 512 messages, as on desktop distributions,
   not the kernel's 10: after a Wi-Fi scan, wpa_supplicant no longer drops
