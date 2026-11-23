@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.1 (2026-11-23)
 
 * `mix compile` builds the system in its own directory: nerves_bootstrap is
   started there, as Nerves 1 needs
