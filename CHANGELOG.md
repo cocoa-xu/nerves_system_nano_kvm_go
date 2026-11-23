@@ -7,6 +7,15 @@
   the socket VintageNet hears it on, which froze the list of networks
 * exFAT in the kernel, and exfatprogs (`mkfs.exfat`, `fsck.exfat`), for
   drives with files over 4 GiB
+* Linux at linux-ax620e 1d958d8:
+  * The USB gadget's optical drive holds DVDs and BDs as well as CDs (the
+    LUN's `profile`), answers GET CONFIGURATION, READ DISC STRUCTURE, READ
+    DISC and TRACK INFORMATION and READ CD, and no longer cuts images at
+    2.3 GB
+  * Wi-Fi (AIC8800): the TCP ACK filter holds back pure ACKs only, never
+    duplicate, SACK, FIN or RST ones nor a new connection's; reorder frames
+    go back to their pool on errors; late frames are dropped for RTP only;
+    no kernel log line each second for the TX power
 
 ## v0.1.1 (2026-11-23)
 
