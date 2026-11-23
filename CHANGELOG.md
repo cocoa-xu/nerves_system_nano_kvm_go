@@ -11,6 +11,8 @@
   * It tells the target of a new or a removed disc by GET EVENT STATUS
     NOTIFICATION, and asks it to eject a disc, as a drive's button does
     (the LUN's `eject_request`)
+* UDF and ISO 9660 in the kernel, and `losetup` in BusyBox: the device can
+  read an installer ISO's files and lay disk images out from them
 
 ## v0.1.2 (2026-11-23)
 
