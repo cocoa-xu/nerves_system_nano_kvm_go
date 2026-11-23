@@ -5,6 +5,8 @@
 * Unix datagram sockets queue 512 messages, as on desktop distributions,
   not the kernel's 10: after a Wi-Fi scan, wpa_supplicant no longer drops
   the socket VintageNet hears it on, which froze the list of networks
+* exFAT in the kernel, and exfatprogs (`mkfs.exfat`, `fsck.exfat`), for
+  drives with files over 4 GiB
 
 ## v0.1.1 (2026-11-23)
 
