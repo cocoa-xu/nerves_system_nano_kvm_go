@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.3 (2026-11-23)
 
 * Linux at linux-ax620e 7af4e54:
   * The USB gadget's optical drive takes CDs whose image keeps the sectors
