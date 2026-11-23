@@ -1,5 +1,9 @@
 #!/bin/sh
 # Board setup before the Erlang VM starts (erlinit --pre-run-exec):
+# - Unix datagram sockets that queue 512 messages, as distributions set it.
+#   With the kernel's 10, the burst of events after a Wi-Fi scan overflows
+#   VintageNet's socket, and wpa_supplicant detaches a listener after 10
+#   failed sends: the list of networks then never changes again.
 # - the application data partition grown to the end of the card
 #   (expand-app-partition)
 # - a USB gadget with a network (NCM) function, so the computer the
@@ -43,6 +47,8 @@ set_address() {
 	esac
 	[ -n "$3" ] && echo $3 > $ncm/$1
 }
+
+echo 512 > /proc/sys/net/unix/max_dgram_qlen
 
 /usr/sbin/expand-app-partition
 

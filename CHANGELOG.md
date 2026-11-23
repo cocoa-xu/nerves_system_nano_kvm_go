@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Unix datagram sockets queue 512 messages, as on desktop distributions,
+  not the kernel's 10: after a Wi-Fi scan, wpa_supplicant no longer drops
+  the socket VintageNet hears it on, which froze the list of networks
+
 ## v0.1.1 (2026-11-23)
 
 * `mix compile` builds the system in its own directory: nerves_bootstrap is
