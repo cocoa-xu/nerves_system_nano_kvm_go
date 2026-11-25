@@ -11,7 +11,7 @@ Notes from probing a NanoKVM Go+ running stock firmware
 | --- | --- |
 | SoC | Axera AX620Q (AX620E family). Go+ reports `AX620QE_CHIP`, Go is `AX620QF` |
 | CPU | 2x Cortex-A53 (`0xd03`) running **AArch32**: `armv7l`, NEON, VFPv4, idiv, LPAE |
-| RAM | Go+ 512 MiB, Go 256 MiB. Linux gets `mem=` (352M observed on Go+); the rest is the CMM pool for the media blocks |
+| RAM | Go+ 512 MiB, Go 256 MiB, which the chip type tells. The stock Linux gets `mem=` (352M observed on Go+, 128M on Go); the rest is the CMM pool for the media blocks |
 | Board ID | ADC channel 0: `board_id = ((raw - 0x20) / 0x40) + 1`; 1 = 256M, 3 = 512M (raw 192 on Go+) |
 | Console | `ttyS3` @ 115200, UART at `0x6080000`; its pads go to the auxiliary USB-C port |
 

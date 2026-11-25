@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+* The NanoKVM-Go with 256 MiB as well as the Go+ with 512 MiB, from the same
+  card: U-Boot gives Linux the DRAM the chip type tells, and the CMA pools
+  of that board, 144 MiB for video and the NPU off on the Go. Sizes set in
+  `cma_video` and `cma_npu` that do not fit the board give the board's, and
+  they leave Linux at least 96 MiB (was: half of the DRAM). Linux no longer
+  takes 512 MiB whatever the board, and the RAM log of early boot messages
+  moved to 0x4ff00000, in the DRAM of both. A card needs a full burn for
+  this U-Boot: upgrades keep the card's
+
 ## v0.1.3 (2026-11-23)
 
 * Linux at linux-ax620e 7af4e54:

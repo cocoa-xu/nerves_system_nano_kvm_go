@@ -3,13 +3,14 @@
 Nerves system for the Sipeed NanoKVM-Go+ (Axera AX620QE, two Cortex-A53 cores
 running 32-bit ARM, 512 MiB LPDDR4) on a mainline Linux kernel with open
 drivers for its hardware: the HDMI/DisplayPort capture with its sound, the
-JPEG and H.264 encoders, the NPU, the LCD and its touch panel. The
-NanoKVM-Go with 256 MiB (AX620QF) is not supported yet.
+JPEG and H.264 encoders, the NPU, the LCD and its touch panel. The same
+card boots the NanoKVM-Go+ (512 MiB, AX620QE) and the NanoKVM-Go (256 MiB,
+AX620QF).
 
 | Feature              | Description                                   |
 | -------------------- | --------------------------------------------- |
 | CPU                  | 2x Cortex-A53 (AArch32)                       |
-| Memory               | 512 MiB                                       |
+| Memory               | 512 MiB (Go+) or 256 MiB (Go)                 |
 | Storage              | MicroSD                                       |
 | Boot loader          | U-Boot 2020.04, [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e), A/B slots |
 | Linux kernel         | 7.3, [`cocoa-xu/linux-ax620e`](https://github.com/cocoa-xu/linux-ax620e) `ax620e-7.3` |
@@ -144,27 +145,38 @@ and applications must wrap their counters at 2^16.
 The `ax620e-npu` driver comes from
 [axera_npu](https://github.com/cocoa-xu/axera_npu) (the `axera-npu`
 package, pinned to a commit) and loads at boot from the NPU's device tree
-node. Its buffers come from a pool of its own (`npu-memory`, 64 MiB unless
-set otherwise, see below), which movable pages use while the NPU is idle: at
-4K the video pipeline holds most of the 192 MiB default CMA. Applications run
+node. Its buffers come from a pool of its own (`npu-memory`, 64 MiB on the
+Go+ unless set otherwise, see below), which movable pages use while the NPU
+is idle: at 4K the video pipeline holds most of the 192 MiB default CMA. The
+Go, with 256 MiB, has the NPU off unless it is given a pool. Applications run
 models with the `axera_npu` Elixir library.
+
+## The Go and the Go+
+
+The Go+ has 512 MiB of DRAM and the Go 256 MiB; the same card boots on both.
+U-Boot gives Linux the DRAM the chip type tells (AX620QE on the Go+, AX620QF
+on the Go) and the CMA pools of that board, below; the RAM log of early boot
+messages is the top MiB of the first 256 MiB, which both have.
 
 ## Memory for video and the NPU
 
 Video and the NPU take their buffers from contiguous memory (CMA) pools.
 U-Boot sizes them at every boot from two variables, in MiB:
 
-| U-Boot variable | Pool                                         | Default (Go+) |
-| --------------- | -------------------------------------------- | ------------- |
-| `cma_video`     | video's, Linux's default CMA pool            | 192           |
-| `cma_npu`       | the NPU's (`npu-memory`); 0 turns the NPU off | 64            |
+| U-Boot variable | Pool                                          | Go+ | Go  |
+| --------------- | --------------------------------------------- | --- | --- |
+| `cma_video`     | video's, Linux's default CMA pool             | 192 | 144 |
+| `cma_npu`       | the NPU's (`npu-memory`); 0 turns the NPU off | 64  | 0   |
 
 Sizes are multiples of 8 (Linux aligns CMA pools to its 8 MiB page blocks),
-video at least 8, both together at most half of the DRAM. For a variable
-that is unset or out of these bounds U-Boot keeps the device tree's size,
-and its log says why. Movable pages use what a pool does not hold, so an
-idle pool costs little; 4K capture with JPEG and H.264 needs about 192 MiB.
-With the NPU off its driver does not bind and its pool goes back to Linux.
+video at least 8, both together leaving Linux at least 96 MiB of the DRAM.
+For a variable that is unset, or out of these bounds on the board the card
+is in, U-Boot takes the board's size from the table, and its log says why: a
+card set up on a Go+ and moved to a Go boots with the Go's sizes, and with
+its own again back on the Go+. Movable pages use what a pool does not hold,
+so an idle pool costs little; 4K capture with JPEG and H.264 needs about 192
+MiB, or about 144 with fewer capture buffers, as the Go has them. With the
+NPU off its driver does not bind and its pool goes back to Linux.
 
 ```elixir
 Nerves.Runtime.KV.put(%{"cma_video" => "160", "cma_npu" => "96"})
@@ -179,8 +191,9 @@ that, after a crash, the watchdog or a plain reboot, puts the old ones back.
 `NanoKVMGo.Memory` in [`nano_kvm_go`](https://github.com/cocoa-xu/nano_kvm_go)
 does this for you.
 
-Only a full burn writes U-Boot: upgrades keep the card's, and a U-Boot from
-before these variables ignores them.
+Only a full burn writes U-Boot: upgrades keep the card's. A U-Boot from
+before these variables ignores them, and one from before the Go's support
+boots the Go+ only.
 
 ## WiFi firmware
 
