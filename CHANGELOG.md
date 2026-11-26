@@ -2,10 +2,14 @@
 
 ## Unreleased
 
-* Linux at linux-ax620e 0b5a2c4:
+* Linux at linux-ax620e 4bd74a0:
   * CPU frequency scaling: the cores run at 208 MHz, 500 MHz, 800 MHz or
     1.2 GHz, which the boot firmware had fixed at 1.2 GHz, chosen by the
     `ondemand` governor; an idle KVM spends most of its time at 208 MHz
+  * The HDMI bridge converts the picture to BT.601 or BT.709 at the full or
+    the limited range, as the capture is asked with
+    `V4L2_PIX_FMT_FLAG_SET_CSC` (it gave BT.709 at full range only), and
+    the capture reports the colour it delivers
 
 ## v0.1.4 (2026-11-27)
 
