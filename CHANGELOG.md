@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* Linux at linux-ax620e 0b5a2c4:
+  * CPU frequency scaling: the cores run at 208 MHz, 500 MHz, 800 MHz or
+    1.2 GHz, which the boot firmware had fixed at 1.2 GHz, chosen by the
+    `ondemand` governor; an idle KVM spends most of its time at 208 MHz
+
 ## v0.1.4 (2026-11-27)
 
 * The NanoKVM-Go with 256 MiB as well as the Go+ with 512 MiB, from the same
