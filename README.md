@@ -165,7 +165,7 @@ U-Boot sizes them at every boot from two variables, in MiB:
 
 | U-Boot variable | Pool                                          | Go+ | Go  |
 | --------------- | --------------------------------------------- | --- | --- |
-| `cma_video`     | video's, Linux's default CMA pool             | 192 | 144 |
+| `cma_video`     | video's, Linux's default CMA pool             | 192 | 128 |
 | `cma_npu`       | the NPU's (`npu-memory`); 0 turns the NPU off | 64  | 0   |
 
 Sizes are multiples of 8 (Linux aligns CMA pools to its 8 MiB page blocks),
@@ -174,8 +174,8 @@ For a variable that is unset, or out of these bounds on the board the card
 is in, U-Boot takes the board's size from the table, and its log says why: a
 card set up on a Go+ and moved to a Go boots with the Go's sizes, and with
 its own again back on the Go+. Movable pages use what a pool does not hold,
-so an idle pool costs little; 4K capture with JPEG and H.264 needs about 192
-MiB, or about 144 with fewer capture buffers, as the Go has them. With the
+so an idle pool costs little; 4K capture with JPEG and H.264 takes about 140
+MiB with four capture buffers and 120 with three, as the Go has them. With the
 NPU off its driver does not bind and its pool goes back to Linux.
 
 ```elixir
