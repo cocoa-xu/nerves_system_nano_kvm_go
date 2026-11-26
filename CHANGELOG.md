@@ -3,13 +3,20 @@
 ## Unreleased
 
 * The NanoKVM-Go with 256 MiB as well as the Go+ with 512 MiB, from the same
-  card: U-Boot gives Linux the DRAM the chip type tells, and the CMA pools
-  of that board, 144 MiB for video and the NPU off on the Go. Sizes set in
-  `cma_video` and `cma_npu` that do not fit the board give the board's, and
-  they leave Linux at least 96 MiB (was: half of the DRAM). Linux no longer
-  takes 512 MiB whatever the board, and the RAM log of early boot messages
-  moved to 0x4ff00000, in the DRAM of both. A card needs a full burn for
-  this U-Boot: upgrades keep the card's
+  card: U-Boot knows the DRAM in the chip's package and gives it to Linux
+  (its own memory fixup, which the vendor's configuration had turned off),
+  with the CMA pools of that board, 128 MiB for video and the NPU off on
+  the Go. Sizes set in `cma_video` and `cma_npu` that do not fit the board
+  give the board's, and they leave Linux at least 96 MiB (was: half of the
+  DRAM). Linux no longer takes 512 MiB whatever the board, and the RAM log
+  of early boot messages moved to 0x4ff00000, in the DRAM of both. A card
+  needs a full burn for this U-Boot: upgrades keep the card's
+* U-Boot at u-boot-ax620e be209481 takes commands of up to 32 arguments
+  (was 16), and `nerves_try` passes the kernel arguments to `setenv` as one:
+  a `cmdline` of more than a few words no longer fails the boot
+* Linux at linux-ax620e 50a3346:
+  * H.265 (HEVC) encoding on the VENC, next to H.264
+  * The RAM log's reserved memory within the first 256 MiB
 
 ## v0.1.3 (2026-11-23)
 
