@@ -10,7 +10,7 @@ the 1 KiB Axera image header and a payload for the GZIPD block.
   MIT license.
 - `uboot.bin`: U-Boot 2020.04 from
   [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e),
-  branch `ax620e-2020.04` (0451ac37), `configs/nanokvm_go_defconfig`: the
+  branch `ax620e-2020.04` (be209481), `configs/nanokvm_go_defconfig`: the
   U-Boot of Sipeed's SDK, with its history and our changes, packed with the
   SDK's `ax_gzip` and image signing script. It runs the Nerves A/B boot in
   `uboot/uboot.env`. Like U-Boot, it is under GPL-2.0, and that branch is its
@@ -26,8 +26,8 @@ On x86-64 Linux, with Arm GNU Toolchain 10.3-2021.07
 package:
 
 ```sh
-curl -L https://github.com/cocoa-xu/u-boot-ax620e/archive/0451ac37c18a55bc3a78d713ae52739c9954c376.tar.gz | tar -xz
-uboot=$PWD/u-boot-ax620e-0451ac37c18a55bc3a78d713ae52739c9954c376
+curl -L https://github.com/cocoa-xu/u-boot-ax620e/archive/be209481ec9810612fbcbb88909ed695321a3fb9.tar.gz | tar -xz
+uboot=$PWD/u-boot-ax620e-be209481ec9810612fbcbb88909ed695321a3fb9
 git clone --filter=blob:none --no-checkout https://github.com/sipeed/maix_ax620e_sdk
 git -C maix_ax620e_sdk sparse-checkout set build tools
 git -C maix_ax620e_sdk checkout d781b0bc65f268080a18cdb957aa8df8ca5ae86d
@@ -44,9 +44,9 @@ python3 "$sdk/build/tools/imgsign/sec_boot_AX620E_sign.py" -i u-boot_axgzip.bin 
   -pub "$sdk/tools/imgsign/public.pem" -prv "$sdk/tools/imgsign/private.pem" -cap 0x54FAFE -key_bit 2048
 ```
 
-With `SOURCE_DATE_EPOCH=1795141486` in the environment, which sets the
+With `SOURCE_DATE_EPOCH=1795701850` in the environment, which sets the
 build date U-Boot prints, this gives the `uboot.bin` here byte for byte
-(MD5 `71afd23b263d5b0fc38b49495f48c8c2`), whatever the directory. U-Boot
+(MD5 `b8cdedd8e1a597fb3767fa22fd93ce46`), whatever the directory. U-Boot
 is built from the tarball: in a git clone it adds the commit to its version,
 and the image differs.
 
