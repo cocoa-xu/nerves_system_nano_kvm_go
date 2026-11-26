@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.1.4 (2026-11-27)
 
 * The NanoKVM-Go with 256 MiB as well as the Go+ with 512 MiB, from the same
   card: U-Boot knows the DRAM in the chip's package and gives it to Linux
