@@ -34,7 +34,7 @@ together. For an application of your own, with `MIX_TARGET=nano_kvm_go`:
 ```elixir
 {:nerves_system_nano_kvm_go,
  github: "cocoa-xu/nerves_system_nano_kvm_go",
- tag: "v0.1.4",
+ tag: "v0.2.0",
  runtime: false,
  targets: :nano_kvm_go}
 ```

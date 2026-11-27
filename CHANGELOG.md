@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 (2026-11-28)
 
+* Cached encoder bitstream buffers with synchronization limited to the bytes
+  written, matching the low-latency pipeline validated on the device
 * Clear encoder state when switching H.264 and H.265, preventing stale
   H.265 data from becoming an H.264 rate-control callback pointer
 * Include package patches in the system archive and build fingerprint

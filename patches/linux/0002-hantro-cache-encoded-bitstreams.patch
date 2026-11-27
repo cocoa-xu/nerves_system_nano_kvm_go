@@ -1,0 +1,150 @@
+From 4e5b21adde1284977a22c506d2588dee53aca855 Mon Sep 17 00:00:00 2001
+From: Cocoa <i@uwucocoa.moe>
+Date: Fri, 27 Nov 2026 19:58:16 +0900
+Subject: [PATCH] feat: hantro: cached encoder bitstream buffers on request,
+ synced only over the bytes in use
+
+---
+ .../media/platform/verisilicon/hantro_drv.c   | 33 +++++++++++++++++++
+ .../media/platform/verisilicon/hantro_hw.h    |  2 ++
+ .../verisilicon/hantro_vc8000e_h264_enc.c     |  4 +++
+ .../verisilicon/hantro_vc8000e_hevc_enc.c     |  2 ++
+ .../verisilicon/hantro_vc8000e_jpeg_enc.c     |  2 ++
+ 5 files changed, 43 insertions(+)
+
+diff --git a/drivers/media/platform/verisilicon/hantro_drv.c b/drivers/media/platform/verisilicon/hantro_drv.c
+index e86f4dd370f6..e561cd9c965b 100644
+--- a/drivers/media/platform/verisilicon/hantro_drv.c
++++ b/drivers/media/platform/verisilicon/hantro_drv.c
+@@ -11,6 +11,7 @@
+  */
+ 
+ #include <linux/clk.h>
++#include <linux/dma-mapping.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
+ #include <linux/of_platform.h>
+@@ -147,6 +148,36 @@ void hantro_start_prepare_run(struct hantro_ctx *ctx)
+ 	}
+ }
+ 
++/*
++ * An encoder's bitstream buffers are cached when userspace asks for
++ * V4L2_MEMORY_FLAG_NON_COHERENT; read uncached they cost the CPU tens of
++ * nanoseconds a byte. Sync only the bytes in use, not the whole buffer of
++ * megabytes: the headers the CPU wrote before a run, the stream after it.
++ */
++void hantro_enc_sync_headers(struct vb2_v4l2_buffer *buf, size_t bytes)
++{
++	struct vb2_buffer *vb = &buf->vb2_buf;
++	struct vb2_queue *q = vb->vb2_queue;
++
++	if (q->non_coherent_mem && bytes)
++		dma_sync_single_for_device(q->dev,
++					   vb2_dma_contig_plane_dma_addr(vb, 0),
++					   bytes, q->dma_dir);
++}
++
++void hantro_enc_sync_stream(struct vb2_v4l2_buffer *buf)
++{
++	struct vb2_buffer *vb = &buf->vb2_buf;
++	struct vb2_queue *q = vb->vb2_queue;
++
++	if (!q->non_coherent_mem)
++		return;
++
++	dma_sync_single_for_cpu(q->dev, vb2_dma_contig_plane_dma_addr(vb, 0),
++				vb2_get_plane_payload(vb, 0), q->dma_dir);
++	vb->skip_cache_sync_on_finish = 1;
++}
++
+ void hantro_end_prepare_run(struct hantro_ctx *ctx)
+ {
+ 	struct vb2_v4l2_buffer *src_buf;
+@@ -243,6 +274,8 @@ queue_init(void *priv, struct vb2_queue *src_vq, struct vb2_queue *dst_vq)
+ 	if (!ctx->is_encoder) {
+ 		dst_vq->dma_attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
+ 		dst_vq->max_num_buffers = MAX_POSTPROC_BUFFERS;
++	} else {
++		dst_vq->allow_cache_hints = 1;
+ 	}
+ 
+ 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+diff --git a/drivers/media/platform/verisilicon/hantro_hw.h b/drivers/media/platform/verisilicon/hantro_hw.h
+index f8313188d177..f5ef6e046a07 100644
+--- a/drivers/media/platform/verisilicon/hantro_hw.h
++++ b/drivers/media/platform/verisilicon/hantro_hw.h
+@@ -459,6 +459,8 @@ void hantro_irq_done(struct hantro_dev *vpu,
+ 		     enum vb2_buffer_state result);
+ void hantro_start_prepare_run(struct hantro_ctx *ctx);
+ void hantro_end_prepare_run(struct hantro_ctx *ctx);
++void hantro_enc_sync_headers(struct vb2_v4l2_buffer *buf, size_t bytes);
++void hantro_enc_sync_stream(struct vb2_v4l2_buffer *buf);
+ 
+ irqreturn_t hantro_g1_irq(int irq, void *dev_id);
+ void hantro_g1_reset(struct hantro_ctx *ctx);
+diff --git a/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c b/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
+index 7d739c655790..961d37bea980 100644
+--- a/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
++++ b/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
+@@ -533,6 +533,9 @@ int hantro_vc8000e_h264_enc_run(struct hantro_ctx *ctx)
+ 	if (!regs->swreg9.output_strm_buffer_limit)
+ 		return -ENOMEM;
+ 
++	hantro_enc_sync_headers(dst_buf,
++				v4l2_h264_enc_rbsp_bytes_count(&enc->rbsp));
++
+ 	regs->swreg10.size_tbl_base = h264_ctx->nal_tbl.dma;
+ 	regs->swreg6.nal_size_write = 1;
+ 
+@@ -748,6 +751,7 @@ void hantro_vc8000e_h264_enc_done(struct hantro_ctx *ctx)
+ 		    v4l2_h264_enc_rbsp_bytes_count(&enc->rbsp);
+ 
+ 	vb2_set_plane_payload(&dst_buf->vb2_buf, 0, bytesused);
++	hantro_enc_sync_stream(dst_buf);
+ 
+ 	v4l2_h264_enc_complete(enc, dst_buf);
+ }
+diff --git a/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c b/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
+index 03c15e902222..7e7bcbba05fd 100644
+--- a/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
++++ b/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
+@@ -403,6 +403,7 @@ int hantro_vc8000e_hevc_enc_run(struct hantro_ctx *ctx)
+ 		enc->header_size;
+ 	regs->swreg9.output_strm_buffer_limit =
+ 		vb2_plane_size(&dst_buf->vb2_buf, 0) - enc->header_size;
++	hantro_enc_sync_headers(dst_buf, enc->header_size);
+ 
+ 	regs->swreg10.size_tbl_base = hevc_ctx->nal_tbl.dma;
+ 	regs->swreg6.nal_size_write = 1;
+@@ -569,6 +570,7 @@ void hantro_vc8000e_hevc_enc_done(struct hantro_ctx *ctx)
+ 	vb2_set_plane_payload(&dst_buf->vb2_buf, 0,
+ 			      regs->swreg9.output_strm_buffer_limit +
+ 			      enc->header_size);
++	hantro_enc_sync_stream(dst_buf);
+ 
+ 	v4l2_hevc_enc_complete(enc, dst_buf);
+ }
+diff --git a/drivers/media/platform/verisilicon/hantro_vc8000e_jpeg_enc.c b/drivers/media/platform/verisilicon/hantro_vc8000e_jpeg_enc.c
+index 3322d826eb3c..23546e65ff54 100644
+--- a/drivers/media/platform/verisilicon/hantro_vc8000e_jpeg_enc.c
++++ b/drivers/media/platform/verisilicon/hantro_vc8000e_jpeg_enc.c
+@@ -115,6 +115,7 @@ int hantro_vc8000e_jpeg_enc_run(struct hantro_ctx *ctx)
+ 	jpeg_ctx.height = ctx->dst_fmt.height;
+ 	jpeg_ctx.quality = ctx->jpeg_quality;
+ 	hantro_jpeg_header_assemble(&jpeg_ctx);
++	hantro_enc_sync_headers(dst_buf, header_size);
+ 
+ 	/* Start from a clean register file, as the vendor stack does. */
+ 	for (i = 2; i < VC8000E_NUM_REGS; i++)
+@@ -171,6 +172,7 @@ void hantro_vc8000e_jpeg_enc_done(struct hantro_ctx *ctx)
+ 
+ 	vb2_set_plane_payload(&dst_buf->vb2_buf, 0,
+ 			      ctx->vpu_dst_fmt->header_size + bytesused);
++	hantro_enc_sync_stream(dst_buf);
+ }
+ 
+ irqreturn_t hantro_vc8000e_jpeg_enc_irq(int irq, void *dev_id)
+-- 
+2.54.0 (Apple Git-157)
+
