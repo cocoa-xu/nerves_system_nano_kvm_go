@@ -18,3 +18,7 @@ cp $NERVES_DEFCONFIG_DIR/boot/boot.bin $NERVES_DEFCONFIG_DIR/boot/uboot.bin \
 
 # D-Bus reads the machine ID that nanokvm-init writes at boot
 ln -sf /run/machine-id $TARGET_DIR/etc/machine-id
+
+# Nerves removes the empty directories under /var: BlueZ's, which an
+# application mounts the pairings on (as NanoKVMGo.Bluetooth does), stays
+mkdir -p $TARGET_DIR/var/lib/bluetooth
