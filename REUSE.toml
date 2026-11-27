@@ -92,6 +92,20 @@ SPDX-FileCopyrightText = [
 ]
 SPDX-License-Identifier = "MIT"
 
+# TF-A's BL31 from Sipeed's maix_ax620e_sdk: Arm's TF-A with Axera's AX620E
+# platform, see boot/README.md
+[[annotations]]
+path = [
+ "boot/bl31.bin"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+ "2013-2022 Arm Limited and Contributors",
+ "2019-2024 Axera Semiconductor Co., Ltd.",
+ "2025 Sipeed"
+]
+SPDX-License-Identifier = "BSD-3-Clause AND MIT"
+
 # Fwup config files
 [[annotations]]
 path = [

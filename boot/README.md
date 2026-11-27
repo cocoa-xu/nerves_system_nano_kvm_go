@@ -2,7 +2,10 @@
 
 The boot ROM loads `boot.bin` from the first FAT32 partition of the SD card,
 and `boot.bin` (SPL) loads `uboot.bin` from the same partition. Both carry
-the 1 KiB Axera image header and a payload for the GZIPD block.
+the 1 KiB Axera image header and a payload for the GZIPD block. SPL runs
+U-Boot in AArch32; U-Boot's `go64` warm-resets the cores into AArch64 and
+enters `bl31.bin`, which the slot's FIT image carries with Linux, and BL31
+starts Linux.
 
 - `boot.bin`: the stock SPL of the NanoKVM-Go firmware v1.0.10, unchanged.
   Sipeed publishes its source, `boot/bl1` of
@@ -16,8 +19,14 @@ the 1 KiB Axera image header and a payload for the GZIPD block.
   `uboot/uboot.env`. Like U-Boot, it is under GPL-2.0, and that branch is its
   source.
 
-They are kept as binaries until the GZIPD packer has an open implementation
-that Buildroot can run.
+- `bl31.bin`: BL31 of TF-A 2.7 for the AX620E, from `boot/atf` of the same
+  SDK as Sipeed publishes it: Arm's TF-A (BSD-3-Clause) with Axera's AX620E
+  platform (MIT, as the SDK). It provides PSCI, through which Linux starts
+  the second core, and keeps its 256 KiB at 0x40040000.
+
+`boot.bin` and `uboot.bin` are kept as binaries until the GZIPD packer has an
+open implementation that Buildroot can run; `bl31.bin` until the system
+builds TF-A itself.
 
 ## Rebuilding `uboot.bin`
 
@@ -54,3 +63,21 @@ Sipeed's SDK, unchanged, gives the project's settings and the tools, all in
 `build` and `tools`. `ax_gzip` is its packer for the GZIPD block, an x86-64
 program without source. The image is signed with the SDK's own key, the one
 the stock SPL takes (see [`docs/hardware.md`](../docs/hardware.md)).
+
+## Rebuilding `bl31.bin`
+
+On x86-64 Linux, with Arm GNU Toolchain 10.3-2021.07
+(`aarch64-none-linux-gnu`) on the `PATH`:
+
+```sh
+git clone --filter=blob:none --no-checkout https://github.com/sipeed/maix_ax620e_sdk
+git -C maix_ax620e_sdk sparse-checkout set boot/atf
+git -C maix_ax620e_sdk checkout d781b0bc65f268080a18cdb957aa8df8ca5ae86d
+make -C maix_ax620e_sdk/boot/atf/arm-trusted-firmware-2.7 \
+  CROSS_COMPILE=aarch64-none-linux-gnu- PLAT=ax620e DEBUG=0 \
+  BUILD_STRING=v2.7 BUILD_MESSAGE_TIMESTAMP='"2026-11-27"' \
+  EXT_CFLAGS="-DATF_IMG_ADDR=0x40040000 -DATF_IMG_PKG_SIZE=0x40000" bl31
+```
+
+This gives `build/ax620e/release/bl31.bin`, the `bl31.bin` here byte for
+byte (MD5 `ed75e2c76aa424f27a46f13fa560595a`), whatever the directory.
