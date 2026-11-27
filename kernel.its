@@ -1,5 +1,6 @@
 /*
- * FIT image for the NanoKVM-Go: zImage + DTB. U-Boot verifies the hashes
+ * FIT image for the NanoKVM-Go: Linux (Image.gz), its device tree and TF-A's
+ * BL31, which U-Boot's go64 enters in AArch64. U-Boot verifies the hashes
  * before booting; a damaged slot then fails over to the other one.
  */
 /dts-v1/;
@@ -10,14 +11,14 @@
 
 	images {
 		kernel {
-			description = "Linux zImage";
-			data = /incbin/("zImage");
+			description = "Linux Image";
+			data = /incbin/("Image.gz");
 			type = "kernel";
-			arch = "arm";
+			arch = "arm64";
 			os = "linux";
-			compression = "none";
-			load = <0x42000000>;
-			entry = <0x42000000>;
+			compression = "gzip";
+			load = <0x40200000>;
+			entry = <0x40200000>;
 			hash {
 				algo = "sha256";
 			};
@@ -27,8 +28,22 @@
 			description = "NanoKVM-Go device tree";
 			data = /incbin/("ax620qe-nanokvm-go.dtb");
 			type = "flat_dt";
-			arch = "arm";
+			arch = "arm64";
 			compression = "none";
+			hash {
+				algo = "sha256";
+			};
+		};
+
+		bl31 {
+			description = "TF-A BL31";
+			data = /incbin/("bl31.bin");
+			type = "firmware";
+			arch = "arm64";
+			os = "arm-trusted-firmware";
+			compression = "none";
+			load = <0x40040000>;
+			entry = <0x40040000>;
 			hash {
 				algo = "sha256";
 			};
@@ -42,6 +57,7 @@
 			description = "NanoKVM-Go";
 			kernel = "kernel";
 			fdt = "fdt";
+			firmware = "bl31";
 		};
 	};
 };

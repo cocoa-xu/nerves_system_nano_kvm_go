@@ -12,5 +12,6 @@ mkdir -p $TARGET_DIR/usr/share/fwup
 NERVES_SDK_IMAGES=$BINARIES_DIR $HOST_DIR/usr/bin/fwup -c -f $NERVES_DEFCONFIG_DIR/fwup-ops.conf -o $TARGET_DIR/usr/share/fwup/ops.fw
 ln -sf ops.fw $TARGET_DIR/usr/share/fwup/revert.fw
 
-# Boot loaders for the boot partition (see boot/README.md)
-cp $NERVES_DEFCONFIG_DIR/boot/boot.bin $NERVES_DEFCONFIG_DIR/boot/uboot.bin $BINARIES_DIR
+# Boot loaders for the boot partition and TF-A's BL31 (see boot/README.md)
+cp $NERVES_DEFCONFIG_DIR/boot/boot.bin $NERVES_DEFCONFIG_DIR/boot/uboot.bin \
+	$NERVES_DEFCONFIG_DIR/boot/bl31.bin $BINARIES_DIR

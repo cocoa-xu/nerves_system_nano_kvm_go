@@ -14,7 +14,8 @@ dd if=/dev/zero of=$BOOT_VFAT bs=512 count=0 seek=262144 2> /dev/null
 $HOST_DIR/sbin/mkfs.fat -F 32 -s 1 -h 8192 -n BOOT $BOOT_VFAT > /dev/null
 $HOST_DIR/bin/mcopy -i $BOOT_VFAT $BINARIES_DIR/boot.bin $BINARIES_DIR/uboot.bin ::/
 
-# The kernel slots hold a FIT image of the zImage and the device tree
+# The kernel slots hold a FIT image of Linux, its device tree and BL31
+gzip -9 -n -c $BINARIES_DIR/Image > $BINARIES_DIR/Image.gz
 cp $NERVES_DEFCONFIG_DIR/kernel.its $BINARIES_DIR
 (cd $BINARIES_DIR && $HOST_DIR/bin/mkimage -f kernel.its kernel.itb > /dev/null)
 
