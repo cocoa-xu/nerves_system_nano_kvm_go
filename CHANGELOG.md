@@ -27,11 +27,11 @@
 * BlueZ 5.86 (bluetoothd, bluetoothctl, btmon), D-Bus and bluez-alsa. BlueZ
   keeps the subscriptions of bonded devices to notifications (our patch: it
   kept only Service Changed's), so a phone paired with an HID device made
-  of the board gets its input again after a restart. The
-  pairings stay on the data partition (`/var/lib/bluetooth` links to
-  `/data/bluetooth`), and `nanokvm-init` prepares the machine ID and the
-  system bus's directory; an application starts `dbus-daemon` and
-  `bluetoothd`, as nano_kvm_go's `NanoKVMGo.Bluetooth` does
+  of the board gets its input again after a restart. `nanokvm-init`
+  prepares the machine ID and the system bus's directory; an application
+  starts `dbus-daemon` and `bluetoothd` and keeps the pairings on the data
+  partition, as nano_kvm_go's `NanoKVMGo.Bluetooth` does (it binds
+  `/data/bluetooth` onto `/var/lib/bluetooth`)
 * The NPU driver at axera_npu 55dd263: programs and tasks with 64-bit user
   pointers besides the vendor's interface, which the runtime of that
   version needs, and 32-bit processes on a 64-bit kernel

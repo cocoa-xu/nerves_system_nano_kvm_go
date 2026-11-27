@@ -16,8 +16,5 @@ ln -sf ops.fw $TARGET_DIR/usr/share/fwup/revert.fw
 cp $NERVES_DEFCONFIG_DIR/boot/boot.bin $NERVES_DEFCONFIG_DIR/boot/uboot.bin \
 	$NERVES_DEFCONFIG_DIR/boot/bl31.bin $BINARIES_DIR
 
-# BlueZ keeps its pairings on the application partition; D-Bus reads the
-# machine ID that nanokvm-init writes at boot
-rm -rf $TARGET_DIR/var/lib/bluetooth
-ln -s /data/bluetooth $TARGET_DIR/var/lib/bluetooth
+# D-Bus reads the machine ID that nanokvm-init writes at boot
 ln -sf /run/machine-id $TARGET_DIR/etc/machine-id
