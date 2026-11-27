@@ -48,12 +48,12 @@ defmodule NervesSystemNanoKvmGo.MixProject do
         defconfig: "nerves_defconfig"
       ],
       env: [
-        {"TARGET_ARCH", "arm"},
+        {"TARGET_ARCH", "aarch64"},
         {"TARGET_CPU", "cortex_a53"},
         {"TARGET_OS", "linux"},
-        {"TARGET_ABI", "gnueabihf"},
+        {"TARGET_ABI", "gnu"},
         {"TARGET_GCC_FLAGS",
-         "-mabi=aapcs-linux -mfpu=neon-fp-armv8 -marm -fstack-protector-strong -mfloat-abi=hard -mcpu=cortex-a53 -fPIE -pie -Wl,-z,now -Wl,-z,relro"}
+         "-mabi=lp64 -fstack-protector-strong -mcpu=cortex-a53 -fPIE -pie -Wl,-z,now -Wl,-z,relro"}
       ],
       checksum: source_finger_print_files()
     ]
@@ -63,7 +63,7 @@ defmodule NervesSystemNanoKvmGo.MixProject do
     [
       {:nerves, "~> 1.11 or ~> 2.0 or ~> 2.0.0-dev", runtime: false},
       {:nerves_system_br, "1.35.3", runtime: false},
-      {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 15.3.0", runtime: false}
+      {:nerves_toolchain_aarch64_nerves_linux_gnu, "~> 15.3.0", runtime: false}
     ]
   end
 
