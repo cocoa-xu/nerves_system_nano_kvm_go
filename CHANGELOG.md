@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* AArch64: Linux and the BEAM run in 64 bits, the BEAM with its JIT (Elixir
+  code ran 2.4 to 6.5 times as fast in our measurements), on the Nerves
+  aarch64 toolchain. U-Boot (u-boot-ax620e e16d8c64) boots the slot's FIT
+  image, now Linux's Image.gz, its device tree and TF-A's BL31 (boot/README.md),
+  through its new `go64` command, which warm-resets the cores into AArch64
+  and enters BL31; BL31 starts the second core (PSCI) and keeps its 256 KiB
+  at 0x40040000. A card needs a full burn: upgrades from the 32-bit system
+  refuse firmware of another architecture, and would keep the old U-Boot
 * Linux at linux-ax620e cc5e212:
   * CPU frequency scaling: the cores run at 208 MHz, 500 MHz, 800 MHz or
     1.2 GHz, which the boot firmware had fixed at 1.2 GHz, chosen by the

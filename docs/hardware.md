@@ -10,7 +10,7 @@ Notes from probing a NanoKVM Go+ running stock firmware
 | | |
 | --- | --- |
 | SoC | Axera AX620Q (AX620E family). Go+ reports `AX620QE_CHIP`, Go is `AX620QF` |
-| CPU | 2x Cortex-A53 (`0xd03`) running **AArch32**: `armv7l`, NEON, VFPv4, idiv, LPAE |
+| CPU | 2x Cortex-A53 (`0xd03`), which the stock firmware runs in **AArch32**: `armv7l`, NEON, VFPv4, idiv, LPAE. This system runs them in AArch64 |
 | RAM | Go+ 512 MiB, Go 256 MiB, which the chip type tells. The stock Linux gets `mem=` (352M observed on Go+, 128M on Go); the rest is the CMM pool for the media blocks |
 | Board ID | ADC channel 0: `board_id = ((raw - 0x20) / 0x40) + 1`; 1 = 256M, 3 = 512M (raw 192 on Go+) |
 | Console | `ttyS3` @ 115200, UART at `0x6080000`; its pads go to the auxiliary USB-C port |
@@ -188,7 +188,9 @@ association.
    AArch64 needs an arm64 SPL/ATF/U-Boot build for this board and an arm64
    port of the DTS. The AX630C-built media modules are unverified on AX620Q.
    The gain is the BEAM JIT (x86_64 and aarch64 only); the cost is memory,
-   which matters most on the 256M Go.
+   which matters most on the 256M Go. Done another way: the stock SPL and our
+   U-Boot stay AArch32, and U-Boot's `go64` warm-resets the cores into
+   AArch64 and enters the SDK's TF-A BL31 (`boot/README.md`).
 6. **Recovery.** Stock flashing mode only exports p2. The first install, and
    any later "flash the whole card over USB", needs a kernel+initramfs that
    exports all of `/dev/mmcblk1`, booted either from p2 (installer) or from

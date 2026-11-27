@@ -1,7 +1,7 @@
 # Sipeed NanoKVM-Go
 
 Nerves system for the Sipeed NanoKVM-Go+ (Axera AX620QE, two Cortex-A53 cores
-running 32-bit ARM, 512 MiB LPDDR4) on a mainline Linux kernel with open
+in AArch64, 512 MiB LPDDR4) on a mainline Linux kernel with open
 drivers for its hardware: the HDMI/DisplayPort capture with its sound, the
 JPEG and H.264 encoders, the NPU, the LCD and its touch panel. The same
 card boots the NanoKVM-Go+ (512 MiB, AX620QE) and the NanoKVM-Go (256 MiB,
@@ -9,10 +9,10 @@ AX620QF).
 
 | Feature              | Description                                   |
 | -------------------- | --------------------------------------------- |
-| CPU                  | 2x Cortex-A53 (AArch32)                       |
+| CPU                  | 2x Cortex-A53 (AArch64)                       |
 | Memory               | 512 MiB (Go+) or 256 MiB (Go)                 |
 | Storage              | MicroSD                                       |
-| Boot loader          | U-Boot 2020.04, [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e), A/B slots |
+| Boot loader          | U-Boot 2020.04, [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e), A/B slots, then TF-A 2.7's BL31 |
 | Linux kernel         | 7.3, [`cocoa-xu/linux-ax620e`](https://github.com/cocoa-xu/linux-ax620e) `ax620e-7.3` |
 | IEx terminal         | SSH (nerves_ssh)                              |
 | Video capture        | V4L2, LT7911EXC bridge, 4K30 YUYV             |
