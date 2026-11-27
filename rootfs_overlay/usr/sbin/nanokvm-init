@@ -19,6 +19,10 @@
 # - the AIC8800 Wi-Fi driver, which has no device table to autoload from.
 # - the LCD's panel driver: it reads its init sequence from /lib/firmware,
 #   which a built-in driver would ask for before the root file system.
+# - what D-Bus and BlueZ need on a read-only root file system: a machine ID
+#   (/etc/machine-id links to /run, a new one each boot), the directory of
+#   the system bus's socket, and the uhid module, whose device bluetoothd
+#   opens for Bluetooth LE input devices.
 # Nerves' busybox is minimal: no head, mountpoint, seq or tr.
 
 gadget=/sys/kernel/config/usb_gadget/nanokvm
@@ -96,5 +100,9 @@ fi
 
 modprobe aic8800_bsp && modprobe aic8800_fdrv || log "AIC8800 driver did not load"
 modprobe panel-mipi-dbi || log "LCD panel driver did not load"
+
+sed 's/-//g' /proc/sys/kernel/random/boot_id > /run/machine-id
+mkdir -p /run/dbus
+modprobe uhid || log "uhid did not load"
 
 exit 0
