@@ -10,7 +10,12 @@
   and enters BL31; BL31 starts the second core (PSCI) and keeps its 256 KiB
   at 0x40040000. A card needs a full burn: upgrades from the 32-bit system
   refuse firmware of another architecture, and would keep the old U-Boot
-* Linux at linux-ax620e cc5e212:
+* Linux at linux-ax620e 1bb2b65:
+  * Bluetooth: the AIC8800's controller as an HCI device, its packets
+    carried in the Wi-Fi firmware's SDIO messages (the firmware the system
+    loads is the one built for that), with RFCOMM, HIDP, BNEP and UHID, and
+    drivers for Bluetooth keyboards, mice and game controllers (Apple,
+    Microsoft, PlayStation, Nintendo)
   * CPU frequency scaling: the cores run at 208 MHz, 500 MHz, 800 MHz or
     1.2 GHz, which the boot firmware had fixed at 1.2 GHz, chosen by the
     `ondemand` governor; an idle KVM spends most of its time at 208 MHz
@@ -19,6 +24,11 @@
     `V4L2_PIX_FMT_FLAG_SET_CSC` (it gave BT.709 at full range only), and
     the capture reports the colour it delivers; by default its firmware's
     own, BT.709 at full range, also after a reboot that left another
+* BlueZ 5.86 (bluetoothd, bluetoothctl, btmon), D-Bus and bluez-alsa. The
+  pairings stay on the data partition (`/var/lib/bluetooth` links to
+  `/data/bluetooth`), and `nanokvm-init` prepares the machine ID and the
+  system bus's directory; an application starts `dbus-daemon` and
+  `bluetoothd`, as nano_kvm_go's `NanoKVMGo.Bluetooth` does
 * The NPU driver at axera_npu 55dd263: programs and tasks with 64-bit user
   pointers besides the vendor's interface, which the runtime of that
   version needs, and 32-bit processes on a 64-bit kernel

@@ -22,6 +22,7 @@ AX620QF).
 | Auxiliary USB-C      | 2 expansion lines: UART, GPIO, PWM or I2C     |
 | NPU                  | `ax620e-npu` (axera_npu), 64 MiB pool         |
 | WiFi                 | AIC8800D80 (SDIO)                             |
+| Bluetooth            | AIC8800D80 (SDIO), BlueZ 5.86                 |
 | Watchdog             | Yes, started by U-Boot                        |
 
 ## Using it
