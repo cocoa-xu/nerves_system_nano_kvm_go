@@ -1,0 +1,280 @@
+From: Cocoa <i@uwucocoa.moe>
+Subject: [PATCH] gatt-database: Store the CCC values of bonded clients
+
+BlueZ stores only Service Changed's CCC value for a bonded client. A
+bonded client keeps its subscriptions from connection to connection and
+does not write them again, so once bluetoothd restarts a peripheral's
+notifications stop until the client pairs anew: an HID keyboard's input
+goes nowhere. Store the other CCC values of bonded clients as well, when
+written and on disconnection, and restore them with Service Changed's.
+
+Restored subscriptions do not reach an application's characteristics as
+StartNotify: an application that wants them sends its values regardless.
+
+Upstream: not sent
+---
+--- a/src/device.h
++++ b/src/device.h
+@@ -159,6 +159,12 @@
+ 								uint16_t value);
+ void device_load_svc_chng_ccc(struct btd_device *device, uint16_t *ccc_le,
+ 							uint16_t *ccc_bredr);
++typedef void (*device_ccc_func_t)(uint8_t bdaddr_type, uint16_t handle,
++					uint16_t value, void *user_data);
++void device_store_ccc(struct btd_device *device, uint8_t bdaddr_type,
++					uint16_t handle, uint16_t value);
++void device_load_ccc(struct btd_device *device, device_ccc_func_t func,
++							void *user_data);
+ void device_set_wake_support(struct btd_device *device, bool wake_support);
+ void device_set_wake_override(struct btd_device *device, bool wake_override);
+ void device_set_wake_allowed(struct btd_device *device, bool wake_allowed,
+--- a/src/device.c
++++ b/src/device.c
+@@ -7066,8 +7066,113 @@
+ 							"CCC_BR/EDR", NULL);
+ 
+ 	g_key_file_free(key_file);
++}
++
++/* The configurations a bonded client wrote to the descriptors of the other
++ * characteristics, as LE_<handle> or BR/EDR_<handle>, so that notifications
++ * go on after bluetoothd restarts: the client keeps them, it writes them
++ * once.
++ */
++#define CCC_GROUP "ClientCharacteristicConfiguration"
++
++static void ccc_key(char *key, size_t size, uint8_t bdaddr_type,
++							uint16_t handle)
++{
++	snprintf(key, size, "%s_%04x",
++			bdaddr_type == BDADDR_BREDR ? "BR/EDR" : "LE", handle);
+ }
++
++void device_store_ccc(struct btd_device *device, uint8_t bdaddr_type,
++					uint16_t handle, uint16_t value)
++{
++	char filename[PATH_MAX];
++	char device_addr[18];
++	char key[16];
++	GKeyFile *key_file;
++	GError *gerr = NULL;
++	char *str;
++	gsize length = 0;
++
++	ba2str(&device->bdaddr, device_addr);
++	create_filename(filename, PATH_MAX, "/%s/%s/info",
++				btd_adapter_get_storage_dir(device->adapter),
++				device_addr);
+ 
++	key_file = g_key_file_new();
++	if (!g_key_file_load_from_file(key_file, filename, 0, &gerr)) {
++		error("Unable to load key file from %s: (%s)", filename,
++								gerr->message);
++		g_clear_error(&gerr);
++	}
++
++	ccc_key(key, sizeof(key), bdaddr_type, handle);
++
++	if (g_key_file_get_integer(key_file, CCC_GROUP, key, NULL) == value)
++		goto done;
++
++	if (value)
++		g_key_file_set_integer(key_file, CCC_GROUP, key, value);
++	else
++		g_key_file_remove_key(key_file, CCC_GROUP, key, NULL);
++
++	create_file(filename, 0600);
++
++	str = g_key_file_to_data(key_file, &length, NULL);
++	if (!g_file_set_contents(filename, str, length, &gerr)) {
++		error("Unable set contents for %s: (%s)", filename,
++								gerr->message);
++		g_error_free(gerr);
++	}
++	g_free(str);
++
++done:
++	g_key_file_free(key_file);
++}
++
++void device_load_ccc(struct btd_device *device, device_ccc_func_t func,
++							void *user_data)
++{
++	char filename[PATH_MAX];
++	char device_addr[18];
++	GKeyFile *key_file;
++	char **keys;
++	int i;
++
++	ba2str(&device->bdaddr, device_addr);
++	create_filename(filename, PATH_MAX, "/%s/%s/info",
++				btd_adapter_get_storage_dir(device->adapter),
++				device_addr);
++
++	key_file = g_key_file_new();
++	if (!g_key_file_load_from_file(key_file, filename, 0, NULL)) {
++		g_key_file_free(key_file);
++		return;
++	}
++
++	keys = g_key_file_get_keys(key_file, CCC_GROUP, NULL, NULL);
++
++	for (i = 0; keys && keys[i]; i++) {
++		unsigned int handle;
++		uint8_t bdaddr_type;
++		int value;
++
++		if (sscanf(keys[i], "LE_%4x", &handle) == 1)
++			bdaddr_type = device->bdaddr_type;
++		else if (sscanf(keys[i], "BR/EDR_%4x", &handle) == 1)
++			bdaddr_type = BDADDR_BREDR;
++		else
++			continue;
++
++		value = g_key_file_get_integer(key_file, CCC_GROUP, keys[i],
++									NULL);
++		if (value > 0 && value <= UINT16_MAX)
++			func(bdaddr_type, handle, value, user_data);
++	}
++
++	g_strfreev(keys);
++	g_key_file_free(key_file);
++}
++
+ void device_set_rssi_with_delta(struct btd_device *device, int8_t rssi,
+ 							int8_t delta_threshold)
+ {
+--- a/src/gatt-database.c	2026-11-27 13:07:49
++++ b/src/gatt-database.c	2026-11-27 13:08:51
+@@ -324,6 +324,28 @@
+ 
+ 	if (ccc_cb->callback)
+ 		ccc_cb->callback(NULL, ccc_cb->user_data);
++}
++
++/* Service Changed's configuration has its own place in storage. */
++static void store_ccc(struct device_state *state, uint16_t handle,
++							uint16_t value)
++{
++	struct btd_device *device;
++
++	if (handle == gatt_db_attribute_get_handle(state->db->svc_chngd_ccc))
++		return;
++
++	device = btd_adapter_find_device(state->db->adapter, &state->bdaddr,
++							state->bdaddr_type);
++	if (device && device_is_bonded(device, state->bdaddr_type))
++		device_store_ccc(device, state->bdaddr_type, handle, value);
++}
++
++static void store_ccc_state(void *data, void *user_data)
++{
++	struct ccc_state *ccc = data;
++
++	store_ccc(user_data, ccc->handle, ccc->value);
+ }
+ 
+ static void att_disconnected(int err, void *user_data)
+@@ -351,6 +373,8 @@
+ 		if (ccc && ccc->value)
+ 			device_store_svc_chng_ccc(device, state->bdaddr_type,
+ 								ccc->value);
++
++		queue_foreach(state->ccc_states, store_ccc_state, state);
+ 
+ 		return;
+ 	}
+@@ -1095,9 +1119,16 @@
+ 			pending_op_free(op);
+ 	}
+ 
+-	if (!ecode)
++	if (!ecode) {
++		struct device_state *state;
++
+ 		ccc->value = val;
+ 
++		state = find_device_state_by_att(database, att);
++		if (state)
++			store_ccc(state, handle, val);
++	}
++
+ done:
+ 	gatt_db_attribute_write_result(attrib, id, ecode);
+ }
+@@ -4239,40 +4270,68 @@
+ }
+ 
+ static void restore_ccc(struct btd_gatt_database *database,
+-			const bdaddr_t *addr, uint8_t addr_type, uint16_t value)
++			const bdaddr_t *addr, uint8_t addr_type,
++			uint16_t handle, uint16_t value)
+ {
+ 	struct device_state *dev_state;
+ 	struct ccc_state *ccc;
+ 
+-	dev_state = device_state_create(database, addr, addr_type);
+-	queue_push_tail(database->device_states, dev_state);
++	dev_state = find_device_state(database, addr, addr_type);
++	if (!dev_state) {
++		dev_state = device_state_create(database, addr, addr_type);
++		queue_push_tail(database->device_states, dev_state);
++	}
+ 
++	if (find_ccc_state(dev_state, handle))
++		return;
++
+ 	ccc = new0(struct ccc_state, 1);
+-	ccc->handle = gatt_db_attribute_get_handle(database->svc_chngd_ccc);
++	ccc->handle = handle;
+ 	ccc->value = value;
+ 	queue_push_tail(dev_state->ccc_states, ccc);
+ }
+ 
++struct restore_data {
++	struct btd_gatt_database *database;
++	struct btd_device *device;
++};
++
++static void restore_other_ccc(uint8_t bdaddr_type, uint16_t handle,
++					uint16_t value, void *user_data)
++{
++	struct restore_data *data = user_data;
++
++	restore_ccc(data->database, device_get_address(data->device),
++						bdaddr_type, handle, value);
++
++	DBG("%s handle 0x%04x", device_get_path(data->device), handle);
++}
++
+ static void restore_state(struct btd_device *device, void *data)
+ {
+ 	struct btd_gatt_database *database = data;
+-	uint16_t ccc_le, ccc_bredr;
++	struct restore_data restore = { database, device };
++	uint16_t ccc_le, ccc_bredr, handle;
+ 
++	handle = gatt_db_attribute_get_handle(database->svc_chngd_ccc);
+ 	device_load_svc_chng_ccc(device, &ccc_le, &ccc_bredr);
+ 
+ 	if (ccc_le) {
+ 		restore_ccc(database, device_get_address(device),
+-				device_get_le_address_type(device), ccc_le);
++				device_get_le_address_type(device), handle,
++				ccc_le);
+ 
+ 		DBG("%s LE", device_get_path(device));
+ 	}
+ 
+ 	if (ccc_bredr) {
+ 		restore_ccc(database, device_get_address(device),
+-						BDADDR_BREDR, ccc_bredr);
++					BDADDR_BREDR, handle, ccc_bredr);
+ 
+ 		DBG("%s BR/EDR", device_get_path(device));
+ 	}
++
++	device_load_ccc(device, restore_other_ccc, &restore);
+ }
+ 
+ void btd_gatt_database_restore_svc_chng_ccc(struct btd_gatt_database *database)

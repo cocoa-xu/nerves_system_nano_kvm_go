@@ -46,6 +46,15 @@ precedence = "override"
 SPDX-FileCopyrightText = "Various"
 SPDX-License-Identifier = "GPL-2.0-only"
 
+# Patches to packages: BlueZ's are its own licence's
+[[annotations]]
+path = [
+ "patches/bluez5_utils/*"
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Cocoa"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
 # The LCD's init sequence, from the vendor kernel's fb_st7789p3 (fbtft)
 [[annotations]]
 path = [

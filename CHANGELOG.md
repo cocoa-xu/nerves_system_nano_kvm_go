@@ -24,7 +24,10 @@
     `V4L2_PIX_FMT_FLAG_SET_CSC` (it gave BT.709 at full range only), and
     the capture reports the colour it delivers; by default its firmware's
     own, BT.709 at full range, also after a reboot that left another
-* BlueZ 5.86 (bluetoothd, bluetoothctl, btmon), D-Bus and bluez-alsa. The
+* BlueZ 5.86 (bluetoothd, bluetoothctl, btmon), D-Bus and bluez-alsa. BlueZ
+  keeps the subscriptions of bonded devices to notifications (our patch: it
+  kept only Service Changed's), so a phone paired with an HID device made
+  of the board gets its input again after a restart. The
   pairings stay on the data partition (`/var/lib/bluetooth` links to
   `/data/bluetooth`), and `nanokvm-init` prepares the machine ID and the
   system bus's directory; an application starts `dbus-daemon` and
