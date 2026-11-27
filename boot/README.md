@@ -13,10 +13,10 @@ starts Linux.
   MIT license.
 - `uboot.bin`: U-Boot 2020.04 from
   [`cocoa-xu/u-boot-ax620e`](https://github.com/cocoa-xu/u-boot-ax620e),
-  branch `ax620e-2020.04` (be209481), `configs/nanokvm_go_defconfig`: the
+  branch `ax620e-2020.04` (e16d8c64), `configs/nanokvm_go_defconfig`: the
   U-Boot of Sipeed's SDK, with its history and our changes, packed with the
   SDK's `ax_gzip` and image signing script. It runs the Nerves A/B boot in
-  `uboot/uboot.env`. Like U-Boot, it is under GPL-2.0, and that branch is its
+  `uboot/uboot.env` and boots Linux in AArch64 with its `go64` command. Like U-Boot, it is under GPL-2.0, and that branch is its
   source.
 
 - `bl31.bin`: BL31 of TF-A 2.7 for the AX620E, from `boot/atf` of the same
@@ -35,8 +35,8 @@ On x86-64 Linux, with Arm GNU Toolchain 10.3-2021.07
 package:
 
 ```sh
-curl -L https://github.com/cocoa-xu/u-boot-ax620e/archive/be209481ec9810612fbcbb88909ed695321a3fb9.tar.gz | tar -xz
-uboot=$PWD/u-boot-ax620e-be209481ec9810612fbcbb88909ed695321a3fb9
+curl -L https://github.com/cocoa-xu/u-boot-ax620e/archive/e16d8c642faf0fdfa4c00cb2e5697d3438f90c2c.tar.gz | tar -xz
+uboot=$PWD/u-boot-ax620e-e16d8c642faf0fdfa4c00cb2e5697d3438f90c2c
 git clone --filter=blob:none --no-checkout https://github.com/sipeed/maix_ax620e_sdk
 git -C maix_ax620e_sdk sparse-checkout set build tools
 git -C maix_ax620e_sdk checkout d781b0bc65f268080a18cdb957aa8df8ca5ae86d
@@ -55,7 +55,7 @@ python3 "$sdk/build/tools/imgsign/sec_boot_AX620E_sign.py" -i u-boot_axgzip.bin 
 
 With `SOURCE_DATE_EPOCH=1795701850` in the environment, which sets the
 build date U-Boot prints, this gives the `uboot.bin` here byte for byte
-(MD5 `b8cdedd8e1a597fb3767fa22fd93ce46`), whatever the directory. U-Boot
+(MD5 `0b1edaee8125e58965197688268bec1e`), whatever the directory. U-Boot
 is built from the tarball: in a git clone it adds the commit to its version,
 and the image differs.
 
