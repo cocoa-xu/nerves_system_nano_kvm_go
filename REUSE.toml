@@ -46,7 +46,13 @@ precedence = "override"
 SPDX-FileCopyrightText = "Various"
 SPDX-License-Identifier = "GPL-2.0-only"
 
-# Patches to packages: BlueZ's are its own licence's
+# Patches to packages follow each package's licence
+[[annotations]]
+path = ["patches/linux/*"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Cocoa"
+SPDX-License-Identifier = "GPL-2.0-only"
+
 [[annotations]]
 path = [
  "patches/bluez5_utils/*"

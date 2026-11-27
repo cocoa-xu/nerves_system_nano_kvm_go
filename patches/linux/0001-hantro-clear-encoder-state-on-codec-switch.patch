@@ -1,0 +1,68 @@
+From: Cocoa <i@uwucocoa.moe>
+Subject: [PATCH] media: hantro: Clear encoder state when switching codecs
+
+The encoder contexts share a union. On HEVC to H.264 switches, HEVC's
+private_data overlaps H.264's rc_ops and becomes an invalid callback table.
+Clear the codec context before initialization and free the H.264 NAL table
+if initialization fails.
+
+Upstream: not sent
+---
+diff --git a/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c b/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
+index 961d37bea980..6330a18781c0 100644
+--- a/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
++++ b/drivers/media/platform/verisilicon/hantro_vc8000e_h264_enc.c
+@@ -8,6 +8,7 @@
+ 
+ #include <linux/unaligned.h>
+ #include <linux/delay.h>
++#include <linux/string.h>
+ #include <media/v4l2-mem2mem.h>
+ #include <media/v4l2-h264-enc-rbsp.h>
+ 
+@@ -176,6 +177,10 @@ int hantro_vc8000e_h264_enc_init(struct hantro_ctx *ctx)
+ 	struct hantro_aux_buf *nal_tbl = &h264_ctx->nal_tbl;
+ 	struct v4l2_h264_enc *enc = &h264_ctx->enc;
+ 	struct device *dev = ctx->dev->dev;
++	int ret;
++
++	/* Codec contexts share a union; HEVC leaves data in H.264 hook fields. */
++	memset(h264_ctx, 0, sizeof(*h264_ctx));
+ 
+ 	nal_tbl->size = ALIGN(MB_HEIGHT(ctx->src_fmt.height), 8);
+ 	nal_tbl->cpu = dma_alloc_coherent(dev, nal_tbl->size,
+@@ -192,7 +197,12 @@ int hantro_vc8000e_h264_enc_init(struct hantro_ctx *ctx)
+ 	enc->flags = V4L2_H264_ENC_FLAG_INTER_PRED |
+ 		     V4L2_H264_ENC_FLAG_HW_SLICE_HEADER;
+ 
+-	return v4l2_h264_enc_init(enc);
++	ret = v4l2_h264_enc_init(enc);
++	if (ret)
++		dma_free_coherent(dev, nal_tbl->size, nal_tbl->cpu,
++				  nal_tbl->dma);
++
++	return ret;
+ }
+ 
+ void hantro_vc8000e_h264_enc_exit(struct hantro_ctx *ctx)
+diff --git a/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c b/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
+index 7e7bcbba05fd..da64fdef337c 100644
+--- a/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
++++ b/drivers/media/platform/verisilicon/hantro_vc8000e_hevc_enc.c
+@@ -9,6 +9,7 @@
+  * so the parameter sets must say what the registers say.
+  */
+ 
++#include <linux/string.h>
+ #include <media/v4l2-mem2mem.h>
+ #include <media/v4l2-hevc-enc.h>
+ 
+@@ -192,6 +193,8 @@ int hantro_vc8000e_hevc_enc_init(struct hantro_ctx *ctx)
+ 	struct device *dev = ctx->dev->dev;
+ 	int ret;
+ 
++	memset(hevc_ctx, 0, sizeof(*hevc_ctx));
++
+ 	/* The sizes of the NAL units of a picture: one slice. */
+ 	nal_tbl->size = PAGE_SIZE;
+ 	nal_tbl->cpu = dma_alloc_coherent(dev, nal_tbl->size, &nal_tbl->dma,

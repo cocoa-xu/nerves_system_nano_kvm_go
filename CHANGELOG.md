@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Clear encoder state when switching H.264 and H.265, preventing stale
+  H.265 data from becoming an H.264 rate-control callback pointer
+* Include package patches in the system archive and build fingerprint
+
 * AArch64: Linux and the BEAM run in 64 bits, the BEAM with its JIT (Elixir
   code ran 2.4 to 6.5 times as fast in our measurements), on the Nerves
   aarch64 toolchain. U-Boot (u-boot-ax620e e16d8c64) boots the slot's FIT

@@ -87,6 +87,7 @@ defmodule NervesSystemNanoKvmGo.MixProject do
       "fwup_include",
       "linux",
       "package",
+      "patches",
       "rootfs_overlay",
       "uboot",
       "busybox.fragment",
