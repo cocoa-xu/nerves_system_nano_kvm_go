@@ -11,6 +11,9 @@
     `V4L2_PIX_FMT_FLAG_SET_CSC` (it gave BT.709 at full range only), and
     the capture reports the colour it delivers; by default its firmware's
     own, BT.709 at full range, also after a reboot that left another
+* The NPU driver at axera_npu 55dd263: programs and tasks with 64-bit user
+  pointers besides the vendor's interface, which the runtime of that
+  version needs, and 32-bit processes on a 64-bit kernel
 
 ## v0.1.4 (2026-11-27)
 
